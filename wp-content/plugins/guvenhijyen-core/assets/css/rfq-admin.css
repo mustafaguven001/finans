@@ -1,0 +1,66 @@
+.gh-rfq-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.gh-rfq-type-general {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.gh-rfq-type-quick_quote {
+    background-color: #fff3e0;
+    color: #e65100;
+}
+
+.gh-rfq-type-quote_list {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.gh-rfq-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.gh-rfq-status--new {
+    background-color: #bbdefb;
+    color: #0d47a1;
+}
+
+.gh-rfq-status--reviewing {
+    background-color: #fff9c4;
+    color: #f57f17;
+}
+
+.gh-rfq-status--prepared {
+    background-color: #c8e6c9;
+    color: #1b5e20;
+}
+
+.gh-rfq-status--sent {
+    background-color: #d1c4e9;
+    color: #4a148c;
+}
+
+.gh-rfq-status--closed {
+    background-color: #e0e0e0;
+    color: #424242;
+}
+
+.gh-rfq-status--cancelled {
+    background-color: #ffcdd2;
+    color: #b71c1c;
+}
+
+#post-body-content .postbox .inside table.form-table th {
+    width: 140px;
+    font-weight: 600;
+}

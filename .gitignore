@@ -1,0 +1,71 @@
+# WordPress core (managed separately)
+/wp-admin/
+/wp-includes/
+/wp-*.php
+/index.php.bak
+/xmlrpc.php
+/license.txt
+/readme.html
+
+# Environment & secrets
+.env
+.env.*
+wp-config.php
+wp-config-local.php
+*.sql
+*.sql.gz
+
+# Uploads (too large for git)
+wp-content/uploads/
+
+# Cache & temp
+wp-content/cache/
+wp-content/w3tc-config/
+wp-content/advanced-cache.php
+wp-content/object-cache.php
+wp-content/db.php
+
+# Vendor plugins (installed via composer/manual)
+wp-content/plugins/woocommerce/
+wp-content/plugins/elementor/
+wp-content/plugins/elementor-pro/
+wp-content/plugins/advanced-custom-fields*/
+wp-content/plugins/wordpress-seo/
+wp-content/plugins/seo-by-rank-math/
+wp-content/plugins/searchwp*/
+wp-content/plugins/contact-form-7/
+wp-content/plugins/akismet/
+
+# Parent theme (installed separately)
+wp-content/themes/hello-elementor/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+debug.log
+error_log
+
+# Backups
+/backups/
+*.bak
+
+# Import data (contains business data)
+import/images/
+import/documents/
+import/*.xlsx
+!import/guven-hijyen-master.xlsx
