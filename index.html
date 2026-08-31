@@ -179,6 +179,21 @@ select.form-control option{background:var(--bg2)}
 .content{padding:0}
 body{background:#fff;color:#000}
 }
+/* Filter Bar */
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);align-items:flex-end}
+.filter-bar .filter-group{display:flex;flex-direction:column;gap:4px;min-width:140px}
+.filter-bar .filter-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.filter-bar .filter-control{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius);font-size:12px;outline:none;cursor:pointer;min-height:34px}
+.filter-bar .filter-control:focus{border-color:var(--blue)}
+.filter-bar .filter-reset{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:var(--radius);font-size:12px;cursor:pointer;align-self:flex-end;white-space:nowrap;transition:all .2s}
+.filter-bar .filter-reset:hover{background:var(--bg4);color:var(--text)}
+.filter-bar .filter-count{font-size:11px;color:var(--text3);align-self:center;margin-left:auto}
+.bank-group-header{display:flex;align-items:center;gap:10px;padding:12px 0 8px;margin-top:8px;border-bottom:2px solid var(--border);grid-column:1/-1}
+.bank-group-header .bank-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.bank-group-header .bank-name{font-size:14px;font-weight:700;color:var(--text)}
+.bank-group-header .bank-count{font-size:12px;color:var(--text3)}
+.upcoming-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 </style>
 </head>
 <body>
@@ -2438,6 +2453,18 @@ function KMH(_ref8) {
     _useState18 = _slicedToArray(_useState17, 2),
     delConfirm = _useState18[0],
     setDelConfirm = _useState18[1];
+  var _kmhBF = useState('Tümü'),
+    _kmhBF2 = _slicedToArray(_kmhBF, 2),
+    bankaFilter = _kmhBF2[0],
+    setBankaFilter = _kmhBF2[1];
+  var _kmhDF = useState('hepsi'),
+    _kmhDF2 = _slicedToArray(_kmhDF, 2),
+    dolulukFilter = _kmhDF2[0],
+    setDolulukFilter = _kmhDF2[1];
+  var _kmhSort = useState('banka'),
+    _kmhSort2 = _slicedToArray(_kmhSort, 2),
+    siralama = _kmhSort2[0],
+    setSiralama = _kmhSort2[1];
   var emptyForm = {
     firma: firms[0] || '',
     sahip: 'Mustafa Güven',
@@ -2455,9 +2482,21 @@ function KMH(_ref8) {
     _useState20 = _slicedToArray(_useState19, 2),
     form = _useState20[0],
     setForm = _useState20[1];
+  var usedBanks = _toConsumableArray(new Set(data.kmh.map(function(x){return x.banka}))).sort();
   var list = data.kmh.filter(function (x) {
     return firmFilter === 'Tüm Firmalar' || x.firma === firmFilter;
+  }).filter(function(x){
+    return bankaFilter === 'Tümü' || x.banka === bankaFilter;
+  }).filter(function(x){
+    var pct = Math.round(x.kullanim / (x.limit || 1) * 100);
+    if(dolulukFilter === '85+') return pct >= 85;
+    if(dolulukFilter === '70-85') return pct >= 70 && pct < 85;
+    if(dolulukFilter === '70-') return pct < 70;
+    return true;
   });
+  if(siralama === 'banka') list = list.slice().sort(function(a,b){return a.banka.localeCompare(b.banka)});
+  else if(siralama === 'doluluk') list = list.slice().sort(function(a,b){return (b.kullanim/(b.limit||1)) - (a.kullanim/(a.limit||1))});
+  else if(siralama === 'odeme') list = list.slice().sort(function(a,b){return a.odemeGunu - b.odemeGunu});
   function save() {
     var f = _objectSpread(_objectSpread({}, form), {}, {
       id: modal.id || Date.now(),
@@ -2487,16 +2526,238 @@ function KMH(_ref8) {
     saveData(next);
     setDelConfirm(null);
   }
+  var groupedByBank = {};
+  list.forEach(function(k){if(!groupedByBank[k.banka])groupedByBank[k.banka]=[];groupedByBank[k.banka].push(k)});
+  var bankOrder = Object.keys(groupedByBank).sort();
+  var hasActiveFilter = bankaFilter !== 'T\u00FCm\u00FC' || dolulukFilter !== 'hepsi';
+  var todayDay = new Date().getDate();
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "section-title"
   }, "\uD83D\uDCB3 KMH \u2013 Kredili Mevduat Hesaplar\u0131"), /*#__PURE__*/React.createElement("div", {
+    className: "filter-bar"
+  }, /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "Banka"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:bankaFilter,onChange:function(e){setBankaFilter(e.target.value)}}, /*#__PURE__*/React.createElement("option",null,"T\u00FCm\u00FC"), usedBanks.map(function(b){return /*#__PURE__*/React.createElement("option",{key:b},b)}))),
+  /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "Doluluk Oran\u0131"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:dolulukFilter,onChange:function(e){setDolulukFilter(e.target.value)}}, /*#__PURE__*/React.createElement("option",{value:"hepsi"},"T\u00FCm\u00FC"), /*#__PURE__*/React.createElement("option",{value:"85+"},"Kritik (%85+)"), /*#__PURE__*/React.createElement("option",{value:"70-85"},"Y\u00FCksek (%70-85)"), /*#__PURE__*/React.createElement("option",{value:"70-"},"Normal (%70 alt\u0131)"))),
+  /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "S\u0131ralama"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:siralama,onChange:function(e){setSiralama(e.target.value)}}, /*#__PURE__*/React.createElement("option",{value:"banka"},"Bankaya G\u00F6re"), /*#__PURE__*/React.createElement("option",{value:"doluluk"},"Doluluk Oran\u0131na G\u00F6re"), /*#__PURE__*/React.createElement("option",{value:"odeme"},"\u00D6deme G\u00FCn\u00FCne G\u00F6re"))),
+  hasActiveFilter && /*#__PURE__*/React.createElement("button", {className:"filter-reset",onClick:function(){setBankaFilter('T\u00FCm\u00FC');setDolulukFilter('hepsi')}}, "\u2715 Filtreleri Temizle"),
+  /*#__PURE__*/React.createElement("span", {className:"filter-count"}, list.length, " / ", data.kmh.length, " kay\u0131t")),
+  siralama === 'banka' ? /*#__PURE__*/React.createElement("div", null, bankOrder.map(function(bankName){
+    var items = groupedByBank[bankName];
+    var bankTotal = items.reduce(function(s,x){return s+x.kullanim},0);
+    var bankLimit = items.reduce(function(s,x){return s+x.limit},0);
+    return /*#__PURE__*/React.createElement("div", {key:bankName,style:{marginBottom:'20px'}},
+      /*#__PURE__*/React.createElement("div", {className:"bank-group-header"},
+        /*#__PURE__*/React.createElement("span", {className:"bank-dot",style:{background:BANK_COLORS[bankName]||'#888'}}),
+        /*#__PURE__*/React.createElement("span", {className:"bank-name"}, bankName),
+        /*#__PURE__*/React.createElement("span", {className:"bank-count"}, items.length, " hesap"),
+        /*#__PURE__*/React.createElement("span", {style:{fontSize:'12px',color:'var(--text2)',marginLeft:'auto'}}, "Toplam: ", fmtTL(bankTotal), " / ", fmtTL(bankLimit))
+      ),
+      /*#__PURE__*/React.createElement("div", {style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:'14px',marginTop:'10px'}},
+        items.map(function(k){return renderKMHCard(k,todayDay)}))
+    )
+  }), /*#__PURE__*/React.createElement("div", {style:{marginTop:'14px'}}, renderKMHAddCard())) :
+  /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))',
       gap: '14px',
       marginBottom: '20px'
     }
-  }, list.map(function (k) {
+  }, list.map(function (k) {return renderKMHCard(k,todayDay)}), renderKMHAddCard()),
+  delConfirm && /*#__PURE__*/React.createElement(ConfirmModal, {
+    mesaj: "Bu KMH kayd\u0131 silinecek.",
+    onOk: function onOk() {
+      return del(delConfirm);
+    },
+    onCancel: function onCancel() {
+      return setDelConfirm(null);
+    }
+  }), renderKMHModal());
+  function renderKMHAddCard(){
+    return /*#__PURE__*/React.createElement("div", {
+    className: "stat-card",
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      border: '2px dashed var(--border2)',
+      background: 'transparent',
+      minHeight: '180px'
+    },
+    onClick: function onClick() {
+      setForm(_objectSpread(_objectSpread({}, emptyForm), {}, {
+        firma: firms[0] || ''
+      }));
+      setModal({});
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      color: 'var(--text3)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: '32px'
+    }
+  }, "+"), /*#__PURE__*/React.createElement("div", null, "Yeni KMH Ekle")))
+  }
+  function renderKMHModal(){
+    if(!modal) return null;
+    return /*#__PURE__*/React.createElement(Modal, {
+    title: modal.id ? 'KMH D\u00FCzenle' : 'Yeni KMH Ekle',
+    onClose: function onClose() {
+      return setModal(null);
+    },
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline",
+      onClick: function onClick() {
+        return setModal(null);
+      }
+    }, "\u0130ptal"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      onClick: save
+    }, "\uD83D\uDCBE Kaydet"))
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-row"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Firma"), /*#__PURE__*/React.createElement("select", {
+    className: "form-control",
+    value: form.firma,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          firma: e.target.value
+        });
+      });
+    }
+  }, firms.map(function (f) {
+    return /*#__PURE__*/React.createElement("option", {
+      key: f
+    }, f);
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Hesap Ad\u0131"), /*#__PURE__*/React.createElement("input", {
+    className: "form-control",
+    value: form.ad,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          ad: e.target.value
+        });
+      });
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-row"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Banka"), /*#__PURE__*/React.createElement("select", {
+    className: "form-control",
+    value: form.banka,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          banka: e.target.value
+        });
+      });
+    }
+  }, BANKS.map(function (b) {
+    return /*#__PURE__*/React.createElement("option", {
+      key: b
+    }, b);
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "KMH Limiti (\u20BA)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-control",
+    value: form.limit,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          limit: e.target.value
+        });
+      });
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-row"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Kullan\u0131m Tutar\u0131 (\u20BA)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-control",
+    value: form.kullanim,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          kullanim: e.target.value
+        });
+      });
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Ayl\u0131k Faiz (\u20BA)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-control",
+    value: form.aylikFaiz,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          aylikFaiz: e.target.value
+        });
+      });
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-row"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "\u00D6deme G\u00FCn\u00FC"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    max: "28",
+    className: "form-control",
+    value: form.odemeGunu,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          odemeGunu: e.target.value
+        });
+      });
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Durum"), /*#__PURE__*/React.createElement("select", {
+    className: "form-control",
+    value: form.durum,
+    onChange: function onChange(e) {
+      return setForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          durum: e.target.value
+        });
+      });
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "aktif"
+  }, "Aktif"), /*#__PURE__*/React.createElement("option", {
+    value: "pasif"
+  }, "Pasif")))))
+  }
+  function renderKMHCard(k,todayDay) {
     var pct = Math.round(k.kullanim / (k.limit || 1) * 100);
     var color = pct >= 85 ? 'var(--red)' : pct >= 70 ? 'var(--yellow)' : 'var(--green)';
     return /*#__PURE__*/React.createElement("div", {
@@ -2677,194 +2938,15 @@ function KMH(_ref8) {
         padding: '8px 12px',
         fontSize: '12px'
       }
-    }, "\u26A0\uFE0F Limit e\u015Fi\u011Fi yakla\u015F\u0131yor"));
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "stat-card",
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer',
-      border: '2px dashed var(--border2)',
-      background: 'transparent',
-      minHeight: '180px'
-    },
-    onClick: function onClick() {
-      setForm(_objectSpread(_objectSpread({}, emptyForm), {}, {
-        firma: firms[0] || ''
-      }));
-      setModal({});
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      color: 'var(--text3)'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: '32px'
-    }
-  }, "+"), /*#__PURE__*/React.createElement("div", null, "Yeni KMH Ekle")))), delConfirm && /*#__PURE__*/React.createElement(ConfirmModal, {
-    mesaj: "Bu KMH kayd\u0131 silinecek.",
-    onOk: function onOk() {
-      return del(delConfirm);
-    },
-    onCancel: function onCancel() {
-      return setDelConfirm(null);
-    }
-  }), modal && /*#__PURE__*/React.createElement(Modal, {
-    title: modal.id ? 'KMH Düzenle' : 'Yeni KMH Ekle',
-    onClose: function onClose() {
-      return setModal(null);
-    },
-    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-outline",
-      onClick: function onClick() {
-        return setModal(null);
-      }
-    }, "\u0130ptal"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-primary",
-      onClick: save
-    }, "\uD83D\uDCBE Kaydet"))
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Firma"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.firma,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          firma: e.target.value
-        });
-      });
-    }
-  }, firms.map(function (f) {
-    return /*#__PURE__*/React.createElement("option", {
-      key: f
-    }, f);
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Hesap Ad\u0131"), /*#__PURE__*/React.createElement("input", {
-    className: "form-control",
-    value: form.ad,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          ad: e.target.value
-        });
-      });
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Banka"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.banka,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          banka: e.target.value
-        });
-      });
-    }
-  }, BANKS.map(function (b) {
-    return /*#__PURE__*/React.createElement("option", {
-      key: b
-    }, b);
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "KMH Limiti (\u20BA)"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    className: "form-control",
-    value: form.limit,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          limit: e.target.value
-        });
-      });
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Kullan\u0131m Tutar\u0131 (\u20BA)"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    className: "form-control",
-    value: form.kullanim,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          kullanim: e.target.value
-        });
-      });
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Ayl\u0131k Faiz (\u20BA)"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    className: "form-control",
-    value: form.aylikFaiz,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          aylikFaiz: e.target.value
-        });
-      });
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "\xD6deme G\xFCn\xFC"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    min: "1",
-    max: "28",
-    className: "form-control",
-    value: form.odemeGunu,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          odemeGunu: e.target.value
-        });
-      });
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Durum"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.durum,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          durum: e.target.value
-        });
-      });
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "aktif"
-  }, "Aktif"), /*#__PURE__*/React.createElement("option", {
-    value: "pasif"
-  }, "Pasif"))))));
+    }, "\u26A0\uFE0F Limit e\u015Fi\u011Fi yakla\u015F\u0131yor"),
+    function(){
+      var daysLeft = k.odemeGunu - todayDay;
+      if(daysLeft < 0) daysLeft += 30;
+      if(daysLeft <= 3) return /*#__PURE__*/React.createElement("div",{className:"upcoming-badge",style:{background:'var(--red-bg)',color:'var(--red)',marginTop:'8px'}},"\uD83D\uDD34 \xD6deme ",daysLeft===0?"bug\xFCn!":daysLeft+" g\xFCn sonra");
+      if(daysLeft <= 7) return /*#__PURE__*/React.createElement("div",{className:"upcoming-badge",style:{background:'var(--yellow-bg)',color:'var(--yellow)',marginTop:'8px'}},"\uD83D\uDFE1 \xD6deme ",daysLeft," g\xFCn sonra");
+      return null;
+    }());
+  }
 }
 
 /* ── KARTLAR ── */
@@ -2883,6 +2965,22 @@ function Kartlar(_ref9) {
     _useState24 = _slicedToArray(_useState23, 2),
     delConfirm = _useState24[0],
     setDelConfirm = _useState24[1];
+  var _kartBF = useState('T\u00FCm\u00FC'),
+    _kartBF2 = _slicedToArray(_kartBF, 2),
+    kartBankaFilter = _kartBF2[0],
+    setKartBankaFilter = _kartBF2[1];
+  var _kartDF = useState('hepsi'),
+    _kartDF2 = _slicedToArray(_kartDF, 2),
+    kartDolulukFilter = _kartDF2[0],
+    setKartDolulukFilter = _kartDF2[1];
+  var _kartKF = useState('hepsi'),
+    _kartKF2 = _slicedToArray(_kartKF, 2),
+    kartKesimFilter = _kartKF2[0],
+    setKartKesimFilter = _kartKF2[1];
+  var _kartSort = useState('banka'),
+    _kartSort2 = _slicedToArray(_kartSort, 2),
+    kartSiralama = _kartSort2[0],
+    setKartSiralama = _kartSort2[1];
   var emptyForm = {
     firma: firms[0] || '',
     sahip: 'Mustafa Güven',
@@ -2938,9 +3036,22 @@ function Kartlar(_ref9) {
     saveData(next);
     setDelConfirm(null);
   }
+  var kartGroupedByBank = {};
+  list.forEach(function(c){if(!kartGroupedByBank[c.banka])kartGroupedByBank[c.banka]=[];kartGroupedByBank[c.banka].push(c)});
+  var kartBankOrder = Object.keys(kartGroupedByBank).sort();
+  var kartHasFilter = kartBankaFilter !== 'T\u00FCm\u00FC' || kartDolulukFilter !== 'hepsi' || kartKesimFilter !== 'hepsi';
+  var kartTodayDay = new Date().getDate();
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "section-title"
-  }, "\uD83D\uDCB0 Kredi Kart\u0131 Y\xF6netimi"), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCB0 Kredi Kart\u0131 Y\xF6netimi"),
+  /*#__PURE__*/React.createElement("div", {className:"filter-bar"},
+    /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "Banka"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:kartBankaFilter,onChange:function(e){setKartBankaFilter(e.target.value)}}, /*#__PURE__*/React.createElement("option",null,"T\u00FCm\u00FC"), kartUsedBanks.map(function(b){return /*#__PURE__*/React.createElement("option",{key:b},b)}))),
+    /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "Doluluk Oran\u0131"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:kartDolulukFilter,onChange:function(e){setKartDolulukFilter(e.target.value)}}, /*#__PURE__*/React.createElement("option",{value:"hepsi"},"T\u00FCm\u00FC"), /*#__PURE__*/React.createElement("option",{value:"85+"},"Kritik (%85+)"), /*#__PURE__*/React.createElement("option",{value:"70-85"},"Y\u00FCksek (%70-85)"), /*#__PURE__*/React.createElement("option",{value:"70-"},"Normal (%70 alt\u0131)"))),
+    /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "Hesap Kesim G\u00FCn\u00FC"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:kartKesimFilter,onChange:function(e){setKartKesimFilter(e.target.value)}}, /*#__PURE__*/React.createElement("option",{value:"hepsi"},"T\u00FCm\u00FC"), /*#__PURE__*/React.createElement("option",{value:"1"},"1-10. g\u00FCn"), /*#__PURE__*/React.createElement("option",{value:"11"},"11-20. g\u00FCn"), /*#__PURE__*/React.createElement("option",{value:"21"},"21-31. g\u00FCn"))),
+    /*#__PURE__*/React.createElement("div", {className:"filter-group"}, /*#__PURE__*/React.createElement("span", {className:"filter-label"}, "S\u0131ralama"), /*#__PURE__*/React.createElement("select", {className:"filter-control",value:kartSiralama,onChange:function(e){setKartSiralama(e.target.value)}}, /*#__PURE__*/React.createElement("option",{value:"banka"},"Bankaya G\xF6re"), /*#__PURE__*/React.createElement("option",{value:"doluluk"},"Doluluk Oran\u0131na G\xF6re"), /*#__PURE__*/React.createElement("option",{value:"odeme"},"\xD6deme G\u00FCn\u00FCne G\xF6re"))),
+    kartHasFilter && /*#__PURE__*/React.createElement("button", {className:"filter-reset",onClick:function(){setKartBankaFilter('T\u00FCm\u00FC');setKartDolulukFilter('hepsi');setKartKesimFilter('hepsi')}}, "\u2715 Filtreleri Temizle"),
+    /*#__PURE__*/React.createElement("span", {className:"filter-count"}, list.length, " / ", data.cards.length, " kart")),
+  /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'flex-end',
@@ -2954,13 +3065,40 @@ function Kartlar(_ref9) {
       }));
       setModal({});
     }
-  }, "+ Yeni Kart")), /*#__PURE__*/React.createElement("div", {
+  }, "+ Yeni Kart")),
+  kartSiralama === 'banka' ? /*#__PURE__*/React.createElement("div", null, kartBankOrder.map(function(bankName){
+    var items = kartGroupedByBank[bankName];
+    var bankBorc = items.reduce(function(s,x){return s+x.borc},0);
+    var bankLimit = items.reduce(function(s,x){return s+x.limit},0);
+    return /*#__PURE__*/React.createElement("div", {key:bankName,style:{marginBottom:'20px'}},
+      /*#__PURE__*/React.createElement("div", {className:"bank-group-header"},
+        /*#__PURE__*/React.createElement("span", {className:"bank-dot",style:{background:BANK_COLORS[bankName]||'#888'}}),
+        /*#__PURE__*/React.createElement("span", {className:"bank-name"}, bankName),
+        /*#__PURE__*/React.createElement("span", {className:"bank-count"}, items.length, " kart"),
+        /*#__PURE__*/React.createElement("span", {style:{fontSize:'12px',color:'var(--text2)',marginLeft:'auto'}}, "Bor\u00E7: ", fmtTL(bankBorc), " / ", fmtTL(bankLimit))
+      ),
+      /*#__PURE__*/React.createElement("div", {style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:'14px',marginTop:'10px'}},
+        items.map(function(c){return renderKartCard(c,kartTodayDay)}))
+    )
+  })) :
+  /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))',
       gap: '14px'
     }
-  }, list.map(function (c) {
+  }, list.map(function (c) {return renderKartCard(c,kartTodayDay)})),
+  delConfirm && /*#__PURE__*/React.createElement(ConfirmModal, {
+    mesaj: "Bu kart kayd\u0131 silinecek.",
+    onOk: function onOk() {
+      return del(delConfirm);
+    },
+    onCancel: function onCancel() {
+      return setDelConfirm(null);
+    }
+  }),
+  renderKartModal());
+  function renderKartCard(c,todayDay) {
     var pct = Math.round(c.borc / (c.limit || 1) * 100);
     var color = pct >= 85 ? 'var(--red)' : pct >= 70 ? 'var(--yellow)' : 'var(--blue)';
     var aylikTaksit = c.taksitSayisi > 0 ? Math.round(c.taksitliTutar / c.taksitSayisi) : 0;
@@ -3163,17 +3301,19 @@ function Kartlar(_ref9) {
         padding: '8px 12px',
         fontSize: '12px'
       }
-    }, "\uD83D\uDEA8 Kritik limit doluluk!"));
-  })), delConfirm && /*#__PURE__*/React.createElement(ConfirmModal, {
-    mesaj: "Bu kart kayd\u0131 silinecek.",
-    onOk: function onOk() {
-      return del(delConfirm);
-    },
-    onCancel: function onCancel() {
-      return setDelConfirm(null);
-    }
-  }), modal && /*#__PURE__*/React.createElement(Modal, {
-    title: modal.id ? 'Kart Düzenle' : 'Yeni Kart Ekle',
+    }, "\uD83D\uDEA8 Kritik limit doluluk!"),
+    function(){
+      var daysLeft = c.sonOdemeGunu - todayDay;
+      if(daysLeft < 0) daysLeft += 30;
+      if(daysLeft <= 3) return /*#__PURE__*/React.createElement("div",{className:"upcoming-badge",style:{background:'var(--red-bg)',color:'var(--red)',marginTop:'8px'}},"\uD83D\uDD34 \xD6deme ",daysLeft===0?"bug\xFCn!":daysLeft+" g\xFCn sonra");
+      if(daysLeft <= 7) return /*#__PURE__*/React.createElement("div",{className:"upcoming-badge",style:{background:'var(--yellow-bg)',color:'var(--yellow)',marginTop:'8px'}},"\uD83D\uDFE1 \xD6deme ",daysLeft," g\xFCn sonra");
+      return null;
+    }());
+  }
+  function renderKartModal(){
+    if(!modal) return null;
+    return /*#__PURE__*/React.createElement(Modal, {
+    title: modal.id ? 'Kart D\u00FCzenle' : 'Yeni Kart Ekle',
     onClose: function onClose() {
       return setModal(null);
     },
@@ -3261,7 +3401,7 @@ function Kartlar(_ref9) {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Toplam Bor\xE7 (\u20BA)"), /*#__PURE__*/React.createElement("input", {
+  }, "Toplam Bor\u00E7 (\u20BA)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     className: "form-control",
     value: form.borc,
@@ -3308,7 +3448,7 @@ function Kartlar(_ref9) {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tek \xC7ekim (\u20BA)"), /*#__PURE__*/React.createElement("input", {
+  }, "Tek \u00C7ekim (\u20BA)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     className: "form-control",
     value: form.tekCekim,
@@ -3325,7 +3465,7 @@ function Kartlar(_ref9) {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Kesim G\xFCn\xFC"), /*#__PURE__*/React.createElement("input", {
+  }, "Kesim G\u00FCn\u00FC"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     min: "1",
     max: "28",
@@ -3342,7 +3482,7 @@ function Kartlar(_ref9) {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Son \xD6deme G\xFCn\xFC"), /*#__PURE__*/React.createElement("input", {
+  }, "Son \xD6deme G\u00FCn\u00FC"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     min: "1",
     max: "28",
@@ -3355,7 +3495,8 @@ function Kartlar(_ref9) {
         });
       });
     }
-  })))));
+  }))))
+  }
 }
 
 /* ── ÇEKLER ── */
@@ -3378,6 +3519,31 @@ function Cekler(_ref0) {
     _useState32 = _slicedToArray(_useState31, 2),
     filter = _useState32[0],
     setFilter = _useState32[1];
+  /* ── filter states ── */
+  var _cekBanka = useState(''),
+    _cekBanka2 = _slicedToArray(_cekBanka, 2),
+    cekBankaFilter = _cekBanka2[0],
+    setCekBankaFilter = _cekBanka2[1];
+  var _cekFirma = useState(''),
+    _cekFirma2 = _slicedToArray(_cekFirma, 2),
+    cekFirmaFilter = _cekFirma2[0],
+    setCekFirmaFilter = _cekFirma2[1];
+  var _cekBelge = useState(''),
+    _cekBelge2 = _slicedToArray(_cekBelge, 2),
+    cekBelgeFilter = _cekBelge2[0],
+    setCekBelgeFilter = _cekBelge2[1];
+  var _cekVadeMin = useState(''),
+    _cekVadeMin2 = _slicedToArray(_cekVadeMin, 2),
+    cekVadeMin = _cekVadeMin2[0],
+    setCekVadeMin = _cekVadeMin2[1];
+  var _cekVadeMax = useState(''),
+    _cekVadeMax2 = _slicedToArray(_cekVadeMax, 2),
+    cekVadeMax = _cekVadeMax2[0],
+    setCekVadeMax = _cekVadeMax2[1];
+  var _cekSiralama = useState('vade'),
+    _cekSiralama2 = _slicedToArray(_cekSiralama, 2),
+    cekSiralama = _cekSiralama2[0],
+    setCekSiralama = _cekSiralama2[1];
   var emptyForm = {
     firma: firms[0] || '',
     sahip: 'Mustafa Güven',
@@ -3394,15 +3560,68 @@ function Cekler(_ref0) {
     _useState34 = _slicedToArray(_useState33, 2),
     form = _useState34[0],
     setForm = _useState34[1];
+  /* ── filter + sort logic ── */
   var list = data.checks.filter(function (x) {
     return firmFilter === 'Tüm Firmalar' || x.firma === firmFilter;
   });
   if (filter !== 'hepsi') list = list.filter(function (x) {
     return x.durum === filter;
   });
-  list = list.sort(function (a, b) {
-    return new Date(a.vade) - new Date(b.vade);
+  if (cekBankaFilter) list = list.filter(function (x) {
+    return x.banka === cekBankaFilter;
   });
+  if (cekFirmaFilter) list = list.filter(function (x) {
+    return x.firma === cekFirmaFilter;
+  });
+  if (cekBelgeFilter) list = list.filter(function (x) {
+    return x.belge === cekBelgeFilter;
+  });
+  if (cekVadeMin) list = list.filter(function (x) {
+    return x.vade >= cekVadeMin;
+  });
+  if (cekVadeMax) list = list.filter(function (x) {
+    return x.vade <= cekVadeMax;
+  });
+  var bankSet = Array.from(new Set(data.checks.map(function (x) { return x.banka; }))).sort();
+  var firmaSet = Array.from(new Set(data.checks.map(function (x) { return x.firma; }))).sort();
+  if (cekSiralama === 'banka') {
+    list = list.sort(function (a, b) { return (a.banka || '').localeCompare(b.banka || ''); });
+  } else if (cekSiralama === 'tutar-asc') {
+    list = list.sort(function (a, b) { return (a.kalan || 0) - (b.kalan || 0); });
+  } else if (cekSiralama === 'tutar-desc') {
+    list = list.sort(function (a, b) { return (b.kalan || 0) - (a.kalan || 0); });
+  } else {
+    list = list.sort(function (a, b) { return new Date(a.vade) - new Date(b.vade); });
+  }
+  var activeFilterCount = [cekBankaFilter, cekFirmaFilter, cekBelgeFilter, cekVadeMin, cekVadeMax].filter(Boolean).length + (cekSiralama !== 'vade' ? 1 : 0);
+  function resetFilters() {
+    setCekBankaFilter('');
+    setCekFirmaFilter('');
+    setCekBelgeFilter('');
+    setCekVadeMin('');
+    setCekVadeMax('');
+    setCekSiralama('vade');
+  }
+  /* ── group by bank ── */
+  var grouped = {};
+  if (cekSiralama === 'banka') {
+    list.forEach(function (x) {
+      var b = x.banka || 'Diğer';
+      if (!grouped[b]) grouped[b] = [];
+      grouped[b].push(x);
+    });
+  }
+  /* ── proximity badge ── */
+  function proximityBadge(vadeStr) {
+    if (!vadeStr) return null;
+    var days = daysUntil(vadeStr);
+    if (days < 0) return React.createElement("span", { className: "upcoming-badge", style: { background: 'var(--red-bg)', color: 'var(--red)' } }, "⚠️ ", Math.abs(days), " gün gecikti");
+    if (days === 0) return React.createElement("span", { className: "upcoming-badge", style: { background: 'var(--red-bg)', color: 'var(--red)' } }, "🔴 Bugün vadesi!");
+    if (days <= 3) return React.createElement("span", { className: "upcoming-badge", style: { background: 'var(--red-bg)', color: 'var(--red)' } }, "🚨 ", days, " gün kaldı");
+    if (days <= 7) return React.createElement("span", { className: "upcoming-badge", style: { background: 'var(--yellow-bg)', color: 'var(--yellow)' } }, "⏰ ", days, " gün kaldı");
+    if (days <= 30) return React.createElement("span", { className: "upcoming-badge", style: { background: 'var(--green-bg)', color: 'var(--green)' } }, "📅 ", days, " gün");
+    return null;
+  }
   function save() {
     var f = _objectSpread(_objectSpread({}, form), {}, {
       id: modal.id || Date.now(),
@@ -3442,287 +3661,164 @@ function Cekler(_ref0) {
     setData(next);
     saveData(next);
   }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "section-title"
-  }, "\uD83D\uDCC4 \xC7ek / Senet Y\xF6netimi"), /*#__PURE__*/React.createElement("div", {
-    className: "tabs"
-  }, [{
-    k: 'hepsi',
-    l: 'Tümü'
-  }, {
-    k: 'bekliyor',
-    l: 'Bekliyor'
-  }, {
-    k: 'gecikti',
-    l: 'Gecikmiş'
-  }, {
-    k: 'tamamlandi',
-    l: 'Ödendi'
-  }].map(function (t) {
-    return /*#__PURE__*/React.createElement("div", {
-      key: t.k,
-      className: "tab".concat(filter === t.k ? ' active' : ''),
-      onClick: function onClick() {
-        return setFilter(t.k);
-      }
-    }, t.l);
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "table-wrap"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "table-header"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "table-title"
-  }, list.length, " kay\u0131t"), /*#__PURE__*/React.createElement("div", {
-    className: "table-actions"
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-primary btn-sm",
-    onClick: function onClick() {
-      setForm(_objectSpread(_objectSpread({}, emptyForm), {}, {
-        firma: firms[0] || ''
-      }));
-      setModal({});
-    }
-  }, "+ Yeni \xC7ek/Senet"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      overflowX: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "A\xE7\u0131klama"), /*#__PURE__*/React.createElement("th", null, "Belge"), /*#__PURE__*/React.createElement("th", null, "Firma"), /*#__PURE__*/React.createElement("th", null, "Banka"), /*#__PURE__*/React.createElement("th", null, "Vade"), /*#__PURE__*/React.createElement("th", null, "Tutar"), /*#__PURE__*/React.createElement("th", null, "Kalan G\xFCn"), /*#__PURE__*/React.createElement("th", null, "Durum"), /*#__PURE__*/React.createElement("th", null, "\u0130\u015Flemler"))), /*#__PURE__*/React.createElement("tbody", null, list.length === 0 && /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-    colSpan: 9,
-    style: {
-      textAlign: 'center',
-      padding: '40px',
-      color: 'var(--text3)'
-    }
-  }, "Kay\u0131t bulunamad\u0131")), list.map(function (x) {
+  /* ── render a single check row ── */
+  function renderCheckRow(x) {
     var days = daysUntil(x.vade);
     var isLate = x.durum === 'gecikti' || days < 0;
-    return /*#__PURE__*/React.createElement("tr", {
+    return React.createElement("tr", {
       key: x.id,
-      style: {
-        background: isLate ? 'rgba(239,68,68,0.05)' : days <= 3 && days >= 0 ? 'rgba(234,179,8,0.05)' : undefined
-      }
-    }, /*#__PURE__*/React.createElement("td", {
-      style: {
-        fontWeight: 500
-      }
-    }, x.ad), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
-      className: "badge badge-".concat(x.belge === 'Çek' ? 'orange' : 'yellow')
-    }, x.belge)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
-      className: "badge badge-purple"
-    }, x.firma)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
-      style: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '5px'
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: '8px',
-        height: '8px',
-        borderRadius: '50%',
-        background: BANK_COLORS[x.banka] || '#888',
-        display: 'inline-block'
-      }
-    }), x.banka)), /*#__PURE__*/React.createElement("td", null, x.vade ? new Date(x.vade).toLocaleDateString('tr-TR') : '-'), /*#__PURE__*/React.createElement("td", {
-      style: {
-        fontWeight: 600
-      }
-    }, fmtTL(x.kalan)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
-      className: "badge badge-".concat(days < 0 ? 'red' : days <= 3 ? 'red' : days <= 7 ? 'yellow' : 'green')
-    }, days < 0 ? "".concat(Math.abs(days), " g\xFCn gecikti") : days === 0 ? 'Bugün' : "".concat(days, " g\xFCn"))), /*#__PURE__*/React.createElement("td", null, statusBadge(x.durum)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        gap: '4px'
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-sm",
-      style: {
-        background: 'var(--green-bg)',
-        color: 'var(--green)'
-      },
-      onClick: function onClick() {
-        return markPaid(x.id);
-      }
-    }, "\u2713"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-outline btn-sm",
-      onClick: function onClick() {
-        setForm(_objectSpread(_objectSpread({}, x), {}, {
-          tutar: String(x.tutar),
-          kalan: String(x.kalan)
-        }));
-        setModal(x);
-      }
-    }, "\u270F\uFE0F"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-sm",
-      style: {
-        background: 'var(--red-bg)',
-        color: 'var(--red)'
-      },
-      onClick: function onClick() {
-        return setDelConfirm(x.id);
-      }
-    }, "\uD83D\uDDD1\uFE0F"))));
-  }))))), delConfirm && /*#__PURE__*/React.createElement(ConfirmModal, {
-    mesaj: "Bu \xE7ek/senet kayd\u0131 silinecek.",
-    onOk: function onOk() {
-      return del(delConfirm);
+      style: { background: isLate ? 'rgba(239,68,68,0.05)' : days <= 3 && days >= 0 ? 'rgba(234,179,8,0.05)' : undefined }
     },
-    onCancel: function onCancel() {
-      return setDelConfirm(null);
-    }
-  }), modal && /*#__PURE__*/React.createElement(Modal, {
-    title: modal.id ? 'Çek/Senet Düzenle' : 'Yeni Çek/Senet Ekle',
-    onClose: function onClose() {
-      return setModal(null);
+      React.createElement("td", { style: { fontWeight: 500 } }, x.ad, " ", proximityBadge(x.vade)),
+      React.createElement("td", null, React.createElement("span", { className: "badge badge-" + (x.belge === 'Çek' ? 'orange' : 'yellow') }, x.belge)),
+      React.createElement("td", null, React.createElement("span", { className: "badge badge-purple" }, x.firma)),
+      React.createElement("td", null, React.createElement("span", { style: { display: 'inline-flex', alignItems: 'center', gap: '5px' } },
+        React.createElement("span", { style: { width: '8px', height: '8px', borderRadius: '50%', background: BANK_COLORS[x.banka] || '#888', display: 'inline-block' } }),
+        x.banka)),
+      React.createElement("td", null, x.vade ? new Date(x.vade).toLocaleDateString('tr-TR') : '-'),
+      React.createElement("td", { style: { fontWeight: 600 } }, fmtTL(x.kalan)),
+      React.createElement("td", null, React.createElement("span", { className: "badge badge-" + (days < 0 ? 'red' : days <= 3 ? 'red' : days <= 7 ? 'yellow' : 'green') },
+        days < 0 ? Math.abs(days) + " gün gecikti" : days === 0 ? 'Bugün' : days + " gün")),
+      React.createElement("td", null, statusBadge(x.durum)),
+      React.createElement("td", null, React.createElement("div", { style: { display: 'flex', gap: '4px' } },
+        React.createElement("button", { className: "btn btn-sm", style: { background: 'var(--green-bg)', color: 'var(--green)' }, onClick: function () { return markPaid(x.id); } }, "✓"),
+        React.createElement("button", { className: "btn btn-outline btn-sm", onClick: function () { setForm(_objectSpread(_objectSpread({}, x), {}, { tutar: String(x.tutar), kalan: String(x.kalan) })); setModal(x); } }, "✏️"),
+        React.createElement("button", { className: "btn btn-sm", style: { background: 'var(--red-bg)', color: 'var(--red)' }, onClick: function () { return setDelConfirm(x.id); } }, "🗑️")))
+    );
+  }
+  /* ── table head ── */
+  var thead = React.createElement("thead", null, React.createElement("tr", null,
+    React.createElement("th", null, "Açıklama"),
+    React.createElement("th", null, "Belge"),
+    React.createElement("th", null, "Firma"),
+    React.createElement("th", null, "Banka"),
+    React.createElement("th", null, "Vade"),
+    React.createElement("th", null, "Tutar"),
+    React.createElement("th", null, "Kalan Gün"),
+    React.createElement("th", null, "Durum"),
+    React.createElement("th", null, "İşlemler")));
+  /* ── build table body with optional bank grouping ── */
+  var tableBody;
+  if (cekSiralama === 'banka' && Object.keys(grouped).length > 0) {
+    var rows = [];
+    Object.keys(grouped).sort().forEach(function (bank) {
+      var items = grouped[bank];
+      var bankTotal = items.reduce(function (s, x) { return s + (x.kalan || 0); }, 0);
+      rows.push(React.createElement("tr", { key: 'hdr-' + bank, style: { background: 'var(--hover)' } },
+        React.createElement("td", { colSpan: 9, style: { fontWeight: 700, padding: '10px 12px' } },
+          React.createElement("span", { style: { display: 'inline-flex', alignItems: 'center', gap: '8px' } },
+            React.createElement("span", { style: { width: '12px', height: '12px', borderRadius: '50%', background: BANK_COLORS[bank] || '#888', display: 'inline-block' } }),
+            bank, " (",items.length," adet) — Toplam: ", fmtTL(bankTotal)))));
+      items.forEach(function (x) { rows.push(renderCheckRow(x)); });
+    });
+    tableBody = React.createElement("tbody", null, rows);
+  } else {
+    tableBody = React.createElement("tbody", null,
+      list.length === 0 && React.createElement("tr", null, React.createElement("td", { colSpan: 9, style: { textAlign: 'center', padding: '40px', color: 'var(--text3)' } }, "Kayıt bulunamadı")),
+      list.map(function (x) { return renderCheckRow(x); }));
+  }
+  return React.createElement("div", null,
+    React.createElement("div", { className: "section-title" }, "📄 Çek / Senet Yönetimi"),
+    /* ── status tabs ── */
+    React.createElement("div", { className: "tabs" }, [
+      { k: 'hepsi', l: 'Tümü' },
+      { k: 'bekliyor', l: 'Bekliyor' },
+      { k: 'gecikti', l: 'Gecikmiş' },
+      { k: 'tamamlandi', l: 'Ödendi' }
+    ].map(function (t) {
+      return React.createElement("div", { key: t.k, className: "tab" + (filter === t.k ? ' active' : ''), onClick: function () { return setFilter(t.k); } }, t.l);
+    })),
+    /* ── filter bar ── */
+    React.createElement("div", { className: "filter-bar" },
+      React.createElement("div", { className: "filter-group" },
+        React.createElement("label", { className: "form-label", style: { fontSize: '11px', margin: 0 } }, "🏦 Banka"),
+        React.createElement("select", { className: "form-control", style: { padding: '6px 8px', fontSize: '12px' }, value: cekBankaFilter, onChange: function (e) { setCekBankaFilter(e.target.value); } },
+          React.createElement("option", { value: '' }, "Tümü"),
+          bankSet.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
+      React.createElement("div", { className: "filter-group" },
+        React.createElement("label", { className: "form-label", style: { fontSize: '11px', margin: 0 } }, "🏢 Firma"),
+        React.createElement("select", { className: "form-control", style: { padding: '6px 8px', fontSize: '12px' }, value: cekFirmaFilter, onChange: function (e) { setCekFirmaFilter(e.target.value); } },
+          React.createElement("option", { value: '' }, "Tümü"),
+          firmaSet.map(function (f) { return React.createElement("option", { key: f, value: f }, f); }))),
+      React.createElement("div", { className: "filter-group" },
+        React.createElement("label", { className: "form-label", style: { fontSize: '11px', margin: 0 } }, "📝 Belge"),
+        React.createElement("select", { className: "form-control", style: { padding: '6px 8px', fontSize: '12px' }, value: cekBelgeFilter, onChange: function (e) { setCekBelgeFilter(e.target.value); } },
+          React.createElement("option", { value: '' }, "Tümü"),
+          React.createElement("option", { value: 'Çek' }, "Çek"),
+          React.createElement("option", { value: 'Senet' }, "Senet"))),
+      React.createElement("div", { className: "filter-group" },
+        React.createElement("label", { className: "form-label", style: { fontSize: '11px', margin: 0 } }, "📅 Vade Baş"),
+        React.createElement("input", { type: "date", className: "form-control", style: { padding: '6px 8px', fontSize: '12px' }, value: cekVadeMin, onChange: function (e) { setCekVadeMin(e.target.value); } })),
+      React.createElement("div", { className: "filter-group" },
+        React.createElement("label", { className: "form-label", style: { fontSize: '11px', margin: 0 } }, "📅 Vade Bitiş"),
+        React.createElement("input", { type: "date", className: "form-control", style: { padding: '6px 8px', fontSize: '12px' }, value: cekVadeMax, onChange: function (e) { setCekVadeMax(e.target.value); } })),
+      React.createElement("div", { className: "filter-group" },
+        React.createElement("label", { className: "form-label", style: { fontSize: '11px', margin: 0 } }, "↕️ Sıralama"),
+        React.createElement("select", { className: "form-control", style: { padding: '6px 8px', fontSize: '12px' }, value: cekSiralama, onChange: function (e) { setCekSiralama(e.target.value); } },
+          React.createElement("option", { value: 'vade' }, "Vade Tarihine Göre"),
+          React.createElement("option", { value: 'banka' }, "Bankaya Göre"),
+          React.createElement("option", { value: 'tutar-desc' }, "Tutar (Yüksek → Düşük)"),
+          React.createElement("option", { value: 'tutar-asc' }, "Tutar (Düşük → Yüksek)"))),
+      activeFilterCount > 0 && React.createElement("div", { className: "filter-group", style: { justifyContent: 'flex-end' } },
+        React.createElement("button", { className: "btn btn-outline btn-sm", style: { fontSize: '11px' }, onClick: resetFilters }, "↺ Sıfırla (" + activeFilterCount + ")"))),
+    /* ── table ── */
+    React.createElement("div", { className: "table-wrap" },
+      React.createElement("div", { className: "table-header" },
+        React.createElement("span", { className: "table-title" }, list.length, " kayıt"),
+        React.createElement("div", { className: "table-actions" },
+          React.createElement("button", { className: "btn btn-primary btn-sm", onClick: function () { setForm(_objectSpread(_objectSpread({}, emptyForm), {}, { firma: firms[0] || '' })); setModal({}); } }, "+ Yeni Çek/Senet"))),
+      React.createElement("div", { style: { overflowX: 'auto' } },
+        React.createElement("table", null, thead, tableBody))),
+    /* ── delete confirm ── */
+    delConfirm && React.createElement(ConfirmModal, {
+      mesaj: "Bu çek/senet kaydı silinecek.",
+      onOk: function () { return del(delConfirm); },
+      onCancel: function () { return setDelConfirm(null); }
+    }),
+    /* ── modal ── */
+    modal && React.createElement(Modal, {
+      title: modal.id ? 'Çek/Senet Düzenle' : 'Yeni Çek/Senet Ekle',
+      onClose: function () { return setModal(null); },
+      footer: React.createElement(React.Fragment, null,
+        React.createElement("button", { className: "btn btn-outline", onClick: function () { return setModal(null); } }, "İptal"),
+        React.createElement("button", { className: "btn btn-primary", onClick: save }, "💾 Kaydet"))
     },
-    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-outline",
-      onClick: function onClick() {
-        return setModal(null);
-      }
-    }, "\u0130ptal"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-primary",
-      onClick: save
-    }, "\uD83D\uDCBE Kaydet"))
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Firma"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.firma,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          firma: e.target.value
-        });
-      });
-    }
-  }, firms.map(function (f) {
-    return /*#__PURE__*/React.createElement("option", {
-      key: f
-    }, f);
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Belge T\xFCr\xFC"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.belge,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          belge: e.target.value
-        });
-      });
-    }
-  }, /*#__PURE__*/React.createElement("option", null, "\xC7ek"), /*#__PURE__*/React.createElement("option", null, "Senet")))), /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "A\xE7\u0131klama"), /*#__PURE__*/React.createElement("input", {
-    className: "form-control",
-    value: form.ad,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          ad: e.target.value
-        });
-      });
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Banka"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.banka,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          banka: e.target.value
-        });
-      });
-    }
-  }, BANKS.map(function (b) {
-    return /*#__PURE__*/React.createElement("option", {
-      key: b
-    }, b);
-  })))), /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Vade Tarihi"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    className: "form-control",
-    value: form.vade,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          vade: e.target.value
-        });
-      });
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Tutar (\u20BA)"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    className: "form-control",
-    value: form.tutar,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          tutar: e.target.value,
-          kalan: e.target.value
-        });
-      });
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "form-row"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Kalan Tutar (\u20BA)"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    className: "form-control",
-    value: form.kalan,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          kalan: e.target.value
-        });
-      });
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Durum"), /*#__PURE__*/React.createElement("select", {
-    className: "form-control",
-    value: form.durum,
-    onChange: function onChange(e) {
-      return setForm(function (f) {
-        return _objectSpread(_objectSpread({}, f), {}, {
-          durum: e.target.value
-        });
-      });
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "bekliyor"
-  }, "Bekliyor"), /*#__PURE__*/React.createElement("option", {
-    value: "gecikti"
-  }, "Gecikti"), /*#__PURE__*/React.createElement("option", {
-    value: "tamamlandi"
-  }, "\xD6dendi"))))));
+      React.createElement("div", { className: "form-row" },
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Firma"),
+          React.createElement("select", { className: "form-control", value: form.firma, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { firma: e.target.value }); }); } },
+            firms.map(function (f) { return React.createElement("option", { key: f }, f); }))),
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Belge Türü"),
+          React.createElement("select", { className: "form-control", value: form.belge, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { belge: e.target.value }); }); } },
+            React.createElement("option", null, "Çek"),
+            React.createElement("option", null, "Senet")))),
+      React.createElement("div", { className: "form-row" },
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Açıklama"),
+          React.createElement("input", { className: "form-control", value: form.ad, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { ad: e.target.value }); }); } })),
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Banka"),
+          React.createElement("select", { className: "form-control", value: form.banka, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { banka: e.target.value }); }); } },
+            BANKS.map(function (b) { return React.createElement("option", { key: b }, b); })))),
+      React.createElement("div", { className: "form-row" },
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Vade Tarihi"),
+          React.createElement("input", { type: "date", className: "form-control", value: form.vade, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { vade: e.target.value }); }); } })),
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Tutar (₺)"),
+          React.createElement("input", { type: "number", className: "form-control", value: form.tutar, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { tutar: e.target.value, kalan: e.target.value }); }); } }))),
+      React.createElement("div", { className: "form-row" },
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Kalan Tutar (₺)"),
+          React.createElement("input", { type: "number", className: "form-control", value: form.kalan, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { kalan: e.target.value }); }); } })),
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", { className: "form-label" }, "Durum"),
+          React.createElement("select", { className: "form-control", value: form.durum, onChange: function (e) { return setForm(function (f) { return _objectSpread(_objectSpread({}, f), {}, { durum: e.target.value }); }); } },
+            React.createElement("option", { value: "bekliyor" }, "Bekliyor"),
+            React.createElement("option", { value: "gecikti" }, "Gecikti"),
+            React.createElement("option", { value: "tamamlandi" }, "Ödendi")))))
+  );
 }
 
 /* ── BÜTÇE ── */
