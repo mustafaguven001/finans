@@ -228,6 +228,24 @@ body{background:#fff;color:#000}
 .sidebar-nav .nav-item:nth-child(16){animation-delay:.32s}
 .content-fade{animation:contentFadeIn .4s ease}
 @keyframes contentFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.login-container{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-box h2{text-align:center;margin-bottom:8px;font-size:24px;color:var(--text)}
+.login-box .login-subtitle{text-align:center;color:var(--text2);font-size:13px;margin-bottom:28px}
+.login-box .login-logo{text-align:center;font-size:48px;margin-bottom:16px}
+.login-box .login-error{background:var(--red-bg);color:var(--red);padding:10px;border-radius:8px;font-size:13px;margin-bottom:14px;text-align:center}
+.login-box .form-control{margin-bottom:14px}
+.login-box .btn-primary{width:100%;padding:12px;font-size:15px;margin-top:6px}
+.login-remember{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--text2)}
+.login-remember input{accent-color:var(--blue)}
+.color-picker-wrap{position:relative;display:inline-block}
+.color-picker-wrap input[type=color]{width:40px;height:40px;border:2px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:transparent}
+.logo-upload-area{border:2px dashed var(--border2);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .3s}
+.logo-upload-area:hover{border-color:var(--blue)}
+.logo-upload-area img{max-width:80px;max-height:80px;border-radius:8px}
+.bank-mgmt-card{padding:16px;background:var(--bg3);border-radius:10px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.bank-mgmt-card img{width:32px;height:32px;border-radius:6px;object-fit:contain}
 </style>
 </head>
 <body>
@@ -259,7 +277,7 @@ var _React = React,
   useCallback = _React.useCallback,
   useRef = _React.useRef;
 var BANKS = ['TEB', 'QNB Finansbank', 'Garanti BBVA', 'Halkbank', 'Vakıfbank', 'İş Bankası', 'Yapı Kredi', 'DenizBank', 'Ziraat Bankası', 'Akbank'];
-var BANK_COLORS = {
+var DEFAULT_BANK_COLORS = {
   'TEB': '#3b82f6',
   'QNB Finansbank': '#f97316',
   'Garanti BBVA': '#22c55e',
@@ -271,6 +289,14 @@ var BANK_COLORS = {
   'Ziraat Bankası': '#16a34a',
   'Akbank': '#ef4444'
 };
+var LS_BANK_COLORS = 'finanspanel_bank_colors';
+var LS_BANK_LOGOS = 'finanspanel_bank_logos';
+function getBankColors(){try{var c=JSON.parse(localStorage.getItem(LS_BANK_COLORS));if(c)return Object.assign({},DEFAULT_BANK_COLORS,c)}catch(e){}return DEFAULT_BANK_COLORS}
+function saveBankColors(c){localStorage.setItem(LS_BANK_COLORS,JSON.stringify(c))}
+function getBankLogos(){try{var l=JSON.parse(localStorage.getItem(LS_BANK_LOGOS));if(l)return l}catch(e){}return {}}
+function saveBankLogos(l){localStorage.setItem(LS_BANK_LOGOS,JSON.stringify(l))}
+var BANK_COLORS = getBankColors();
+var BANK_LOGOS = getBankLogos();
 var FIRMA_ICONS = ['🏗️', '🧼', '👤', '🏭', '🏪', '💼', '🏬', '🚚'];
 var FIRMA_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#14b8a6', '#eab308', '#ef4444', '#6366f1'];
 var DEFAULT_FIRMS = [{
@@ -2328,8 +2354,8 @@ function KMH(_ref8) {
     var bankLimit = items.reduce(function(s,x){return s+x.limit},0);
     return /*#__PURE__*/React.createElement("div", {key:bankName,style:{marginBottom:'20px'}},
       /*#__PURE__*/React.createElement("div", {className:"bank-group-header"},
-        /*#__PURE__*/React.createElement("span", {className:"bank-dot",style:{background:BANK_COLORS[bankName]||'#888'}}),
-        /*#__PURE__*/React.createElement("span", {className:"bank-name"}, bankName),
+        /*#__PURE__*/BANK_LOGOS[bankName] ? React.createElement("img",{src:BANK_LOGOS[bankName],style:{width:'16px',height:'16px',borderRadius:'4px',objectFit:'contain'}}) : React.createElement("span", {className:"bank-dot",style:{background:BANK_COLORS[bankName]||'#888'}}),
+        React.createElement("span", {className:"bank-name"}, bankName),
         /*#__PURE__*/React.createElement("span", {className:"bank-count"}, items.length, " hesap"),
         /*#__PURE__*/React.createElement("span", {style:{fontSize:'12px',color:'var(--text2)',marginLeft:'auto'}}, "Toplam: ", fmtTL(bankTotal), " / ", fmtTL(bankLimit))
       ),
@@ -2869,8 +2895,8 @@ function Kartlar(_ref9) {
     var bankLimit = items.reduce(function(s,x){return s+x.limit},0);
     return /*#__PURE__*/React.createElement("div", {key:bankName,style:{marginBottom:'20px'}},
       /*#__PURE__*/React.createElement("div", {className:"bank-group-header"},
-        /*#__PURE__*/React.createElement("span", {className:"bank-dot",style:{background:BANK_COLORS[bankName]||'#888'}}),
-        /*#__PURE__*/React.createElement("span", {className:"bank-name"}, bankName),
+        /*#__PURE__*/BANK_LOGOS[bankName] ? React.createElement("img",{src:BANK_LOGOS[bankName],style:{width:'16px',height:'16px',borderRadius:'4px',objectFit:'contain'}}) : React.createElement("span", {className:"bank-dot",style:{background:BANK_COLORS[bankName]||'#888'}}),
+        React.createElement("span", {className:"bank-name"}, bankName),
         /*#__PURE__*/React.createElement("span", {className:"bank-count"}, items.length, " kart"),
         /*#__PURE__*/React.createElement("span", {style:{fontSize:'12px',color:'var(--text2)',marginLeft:'auto'}}, "Bor\u00E7: ", fmtTL(bankBorc), " / ", fmtTL(bankLimit))
       ),
@@ -8242,7 +8268,8 @@ function Firmalar(_ref28) {
     ad: '',
     tur: 'Ticari',
     icon: '🏢',
-    renk: '#3b82f6'
+    renk: '#3b82f6',
+    logo: ''
   };
   var _useState85 = useState(emptyForm),
     _useState86 = _slicedToArray(_useState85, 2),
@@ -8351,7 +8378,7 @@ function Firmalar(_ref28) {
         justifyContent: 'center',
         fontSize: '22px'
       }
-    }, f.icon || '🏢'), /*#__PURE__*/React.createElement("div", {
+    }, f.logo ? React.createElement("img",{src:f.logo,style:{width:'32px',height:'32px',borderRadius:'6px',objectFit:'contain'}}) : (f.icon || '\uD83C\uDFE2')), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
@@ -8547,11 +8574,11 @@ function Firmalar(_ref28) {
         });
       });
     }
-  }, /*#__PURE__*/React.createElement("option", null, "Ticari"), /*#__PURE__*/React.createElement("option", null, "Ki\u015Fisel"), /*#__PURE__*/React.createElement("option", null, "Holdingi"), /*#__PURE__*/React.createElement("option", null, "Di\u011Fer"))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("option", null, "Ticari"), /*#__PURE__*/React.createElement("option", null, "Ki\u015Fisel"), /*#__PURE__*/React.createElement("option", null, "Holdingi"), /*#__PURE__*/React.createElement("option", null, "Di\u011Fer"))), React.createElement("div", {
     className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
+  }, React.createElement("label", {
     className: "form-label"
-  }, "\u0130kon"), /*#__PURE__*/React.createElement("select", {
+  }, "\u0130kon"), React.createElement("select", {
     className: "form-control",
     value: form.icon,
     onChange: function onChange(e) {
@@ -8562,25 +8589,41 @@ function Firmalar(_ref28) {
       });
     }
   }, FIRMA_ICONS.map(function (ic) {
-    return /*#__PURE__*/React.createElement("option", {
+    return React.createElement("option", {
       key: ic,
       value: ic
     }, ic);
-  })))), /*#__PURE__*/React.createElement("div", {
+  })))), React.createElement("div", {
     className: "form-row full"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, React.createElement("div", {
     className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
+  }, React.createElement("label", {className: "form-label"}, "Firma Logosu"),
+    React.createElement("div", {className:"logo-upload-area",onClick:function(){
+      var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+      inp.onchange=function(ev){var file=ev.target.files[0];if(!file)return;
+        var reader=new FileReader();reader.onload=function(re){
+          setForm(function(ff){return _objectSpread(_objectSpread({},ff),{},{logo:re.target.result})})
+        };reader.readAsDataURL(file)};inp.click()}},
+      form.logo ? React.createElement("img",{src:form.logo,style:{maxWidth:'80px',maxHeight:'80px',borderRadius:'8px'}})
+        : React.createElement("div",{style:{color:'var(--text3)',fontSize:'13px'}},"\uD83D\uDCF7 Logo y\u00FCklemek i\u00E7in t\u0131klay\u0131n"),
+      form.logo && React.createElement("button",{className:"btn btn-sm",style:{marginTop:'8px',fontSize:'11px',background:'var(--red-bg)',color:'var(--red)'},onClick:function(e){e.stopPropagation();setForm(function(ff){return _objectSpread(_objectSpread({},ff),{},{logo:''})})}}, "\u2715 Logoyu Kald\u0131r")
+    )
+  )), React.createElement("div", {
+    className: "form-row full"
+  }, React.createElement("div", {
+    className: "form-group"
+  }, React.createElement("label", {
     className: "form-label"
-  }, "Renk"), /*#__PURE__*/React.createElement("div", {
+  }, "Renk"), React.createElement("div", {
     style: {
       display: 'flex',
       gap: '8px',
       flexWrap: 'wrap',
-      marginTop: '6px'
+      marginTop: '6px',
+      alignItems: 'center'
     }
   }, FIRMA_COLORS.map(function (c) {
-    return /*#__PURE__*/React.createElement("div", {
+    return React.createElement("div", {
       key: c,
       onClick: function onClick() {
         return setForm(function (f) {
@@ -8599,7 +8642,9 @@ function Firmalar(_ref28) {
         boxSizing: 'border-box'
       }
     });
-  })))), /*#__PURE__*/React.createElement("div", {
+  }), React.createElement("div",{className:"color-picker-wrap"},
+    React.createElement("input",{type:"color",value:form.renk||'#3b82f6',onChange:function(e){setForm(function(ff){return _objectSpread(_objectSpread({},ff),{},{renk:e.target.value})})},title:"\u00D6zel renk se\u00E7"})
+  )))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: '12px',
       padding: '12px',
@@ -8620,7 +8665,7 @@ function Firmalar(_ref28) {
       justifyContent: 'center',
       fontSize: '20px'
     }
-  }, form.icon), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, form.logo ? React.createElement("img",{src:form.logo,style:{width:'28px',height:'28px',borderRadius:'6px',objectFit:'contain'}}) : form.icon), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
@@ -8678,9 +8723,123 @@ function Ayarlar(_ref29) {
       saveData(initialData);
     }
   }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  var _bankColors2 = useState(function(){return getBankColors()}),
+    _bankColors3 = _slicedToArray(_bankColors2, 2),
+    bankColorsLocal = _bankColors3[0],
+    setBankColorsLocal = _bankColors3[1];
+  var _bankLogos2 = useState(function(){return getBankLogos()}),
+    _bankLogos3 = _slicedToArray(_bankLogos2, 2),
+    bankLogosLocal = _bankLogos3[0],
+    setBankLogosLocal = _bankLogos3[1];
+  var _newBankName = useState(''),
+    _newBankName2 = _slicedToArray(_newBankName, 2),
+    newBankName = _newBankName2[0],
+    setNewBankName = _newBankName2[1];
+  function updateBankColor(bank, color) {
+    var next = _objectSpread(_objectSpread({}, bankColorsLocal), {}, Object.fromEntries([[bank, color]]));
+    setBankColorsLocal(next);
+    saveBankColors(next);
+    BANK_COLORS[bank] = color;
+  }
+  function updateBankLogo(bank, logo) {
+    var next = _objectSpread(_objectSpread({}, bankLogosLocal), {}, Object.fromEntries([[bank, logo]]));
+    setBankLogosLocal(next);
+    saveBankLogos(next);
+    BANK_LOGOS[bank] = logo;
+  }
+  function addNewBank() {
+    if (!newBankName.trim()) return;
+    var name = newBankName.trim();
+    if (BANKS.indexOf(name) === -1) BANKS.push(name);
+    updateBankColor(name, '#888888');
+    setNewBankName('');
+  }
+  var _userMgmt = useState(false),
+    _userMgmt2 = _slicedToArray(_userMgmt, 2),
+    showUserMgmt = _userMgmt2[0],
+    setShowUserMgmt = _userMgmt2[1];
+  var _users = useState(function(){return getUsers()}),
+    _users2 = _slicedToArray(_users, 2),
+    users = _users2[0],
+    setUsers = _users2[1];
+  var _newUser = useState({username:'',password:'',ad:''}),
+    _newUser2 = _slicedToArray(_newUser, 2),
+    newUser = _newUser2[0],
+    setNewUser = _newUser2[1];
+  function addUser() {
+    if (!newUser.username.trim() || !newUser.password.trim()) {alert('Kullan\u0131c\u0131 ad\u0131 ve \u015Fifre zorunlu');return}
+    var updated = [].concat(_toConsumableArray(users),[{username:newUser.username.trim(),password:newUser.password.trim(),ad:newUser.ad.trim()||newUser.username.trim()}]);
+    setUsers(updated);
+    localStorage.setItem(LS_USERS, JSON.stringify(updated));
+    setNewUser({username:'',password:'',ad:''});
+  }
+  function deleteUser(uname) {
+    if (users.length <= 1) {alert('En az bir kullan\u0131c\u0131 olmal\u0131d\u0131r');return}
+    var updated = users.filter(function(u){return u.username!==uname});
+    setUsers(updated);
+    localStorage.setItem(LS_USERS, JSON.stringify(updated));
+  }
+  return React.createElement("div", null, React.createElement("div", {
     className: "section-title"
-  }, "\u2699\uFE0F Ayarlar"), /*#__PURE__*/React.createElement("div", {
+  }, "\u2699\uFE0F Ayarlar"),
+  React.createElement("div", {className:"stat-card",style:{padding:'20px',marginBottom:'20px'}},
+    React.createElement("div", {style:{fontWeight:700,fontSize:'15px',marginBottom:'14px'}}, "\uD83C\uDFE6 Banka Y\u00F6netimi"),
+    React.createElement("div", {style:{fontSize:'12px',color:'var(--text2)',marginBottom:'14px'}}, "Banka renkleri ve logolar\u0131 t\u00FCm mod\u00FCllerde ge\u00E7erlidir."),
+    BANKS.map(function(bank){
+      return React.createElement("div", {key:bank,className:"bank-mgmt-card"},
+        React.createElement("div", {style:{width:'40px',height:'40px',borderRadius:'8px',background:(bankColorsLocal[bank]||'#888')+'22',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+          bankLogosLocal[bank] ? React.createElement("img",{src:bankLogosLocal[bank],style:{width:'32px',height:'32px',borderRadius:'6px',objectFit:'contain'}})
+            : React.createElement("span",{style:{fontSize:'18px'}},"\uD83C\uDFE6")
+        ),
+        React.createElement("div", {style:{flex:1,minWidth:0}},
+          React.createElement("div",{style:{fontWeight:600,fontSize:'14px'}},bank),
+          React.createElement("div",{style:{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}},
+            (data.kmh||[]).filter(function(x){return x.banka===bank}).length, " KMH, ",
+            (data.cards||[]).filter(function(x){return x.banka===bank}).length, " Kart, ",
+            (data.loans||[]).filter(function(x){return x.banka===bank}).length, " Kredi"
+          )
+        ),
+        React.createElement("div",{className:"color-picker-wrap"},
+          React.createElement("input",{type:"color",value:bankColorsLocal[bank]||'#888888',onChange:function(e){updateBankColor(bank,e.target.value)},title:"Renk se\u00E7"})
+        ),
+        React.createElement("button",{className:"btn btn-sm btn-outline",style:{fontSize:'11px',padding:'4px 10px'},onClick:function(){
+          var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+          inp.onchange=function(ev){var file=ev.target.files[0];if(!file)return;
+            var reader=new FileReader();reader.onload=function(re){updateBankLogo(bank,re.target.result)};
+            reader.readAsDataURL(file)};inp.click()}}, "\uD83D\uDCF7 Logo"),
+        bankLogosLocal[bank] && React.createElement("button",{className:"btn btn-sm",style:{fontSize:'11px',padding:'4px 8px',background:'var(--red-bg)',color:'var(--red)'},onClick:function(){updateBankLogo(bank,'')}}, "\u2715")
+      )
+    }),
+    React.createElement("div",{style:{display:'flex',gap:'8px',marginTop:'12px'}},
+      React.createElement("input",{className:"form-control",placeholder:"Yeni banka ad\u0131...",value:newBankName,onChange:function(e){setNewBankName(e.target.value)},style:{flex:1}}),
+      React.createElement("button",{className:"btn btn-primary btn-sm",onClick:addNewBank},"+ Ekle")
+    )
+  ),
+  React.createElement("div", {className:"stat-card",style:{padding:'20px',marginBottom:'20px'}},
+    React.createElement("div", {style:{fontWeight:700,fontSize:'15px',marginBottom:'14px',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+      React.createElement("span",null,"\uD83D\uDC64 Kullan\u0131c\u0131 Y\u00F6netimi"),
+      React.createElement("button",{className:"btn btn-sm btn-outline",onClick:function(){setShowUserMgmt(!showUserMgmt)}}, showUserMgmt ? "Gizle" : "G\u00F6ster")
+    ),
+    showUserMgmt && React.createElement("div",null,
+      users.map(function(u){
+        return React.createElement("div",{key:u.username,style:{display:'flex',alignItems:'center',gap:'10px',padding:'8px',background:'var(--bg3)',borderRadius:'8px',marginBottom:'6px'}},
+          React.createElement("span",{style:{fontSize:'20px'}},"\uD83D\uDC64"),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{style:{fontWeight:600,fontSize:'13px'}},u.ad||u.username),
+            React.createElement("div",{style:{fontSize:'11px',color:'var(--text3)'}},u.username)
+          ),
+          React.createElement("button",{className:"btn btn-sm",style:{background:'var(--red-bg)',color:'var(--red)',fontSize:'11px'},onClick:function(){deleteUser(u.username)}},"\u2715")
+        )
+      }),
+      React.createElement("div",{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:'8px',marginTop:'10px'}},
+        React.createElement("input",{className:"form-control",placeholder:"Kullan\u0131c\u0131 ad\u0131",value:newUser.username,onChange:function(e){setNewUser(function(u){return _objectSpread(_objectSpread({},u),{},{username:e.target.value})})},style:{fontSize:'12px'}}),
+        React.createElement("input",{className:"form-control",type:"password",placeholder:"\u015Eifre",value:newUser.password,onChange:function(e){setNewUser(function(u){return _objectSpread(_objectSpread({},u),{},{password:e.target.value})})},style:{fontSize:'12px'}}),
+        React.createElement("input",{className:"form-control",placeholder:"Ad Soyad",value:newUser.ad,onChange:function(e){setNewUser(function(u){return _objectSpread(_objectSpread({},u),{},{ad:e.target.value})})},style:{fontSize:'12px'}}),
+        React.createElement("button",{className:"btn btn-primary btn-sm",onClick:addUser},"+ Ekle")
+      )
+    )
+  ),
+  React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))',
@@ -8760,7 +8919,112 @@ function Ayarlar(_ref29) {
 }
 
 /* ── ANA UYGULAMA ── */
+
+/* ── AUTH ── */
+var LS_AUTH = 'finanspanel_auth';
+var LS_USERS = 'finanspanel_users';
+function getUsers() {
+  try {
+    var u = JSON.parse(localStorage.getItem(LS_USERS));
+    if (u && u.length) return u;
+  } catch(e) {}
+  var def = [{username:'admin',password:'admin123',ad:'Y\u00F6netici'}];
+  localStorage.setItem(LS_USERS, JSON.stringify(def));
+  return def;
+}
+function checkAuth() {
+  try {
+    var s = localStorage.getItem(LS_AUTH);
+    if (s) {
+      var a = JSON.parse(s);
+      if (a && a.loggedIn) return a;
+    }
+  } catch(e) {}
+  return null;
+}
+function doLogin(username, password, remember) {
+  var users = getUsers();
+  var u = users.find(function(x){return x.username===username && x.password===password});
+  if (!u) return false;
+  var auth = {loggedIn:true, username:u.username, ad:u.ad, time:Date.now()};
+  if (remember) localStorage.setItem(LS_AUTH, JSON.stringify(auth));
+  else sessionStorage.setItem(LS_AUTH, JSON.stringify(auth));
+  return auth;
+}
+function doLogout() {
+  localStorage.removeItem(LS_AUTH);
+  sessionStorage.removeItem(LS_AUTH);
+}
+function checkAuthFull() {
+  var a = checkAuth();
+  if (a) return a;
+  try {
+    var s = sessionStorage.getItem(LS_AUTH);
+    if (s) {
+      var b = JSON.parse(s);
+      if (b && b.loggedIn) return b;
+    }
+  } catch(e) {}
+  return null;
+}
+function LoginScreen(_ref_login) {
+  var onLogin = _ref_login.onLogin;
+  var _loginU = useState(''),
+    _loginU2 = _slicedToArray(_loginU, 2),
+    username = _loginU2[0],
+    setUsername = _loginU2[1];
+  var _loginP = useState(''),
+    _loginP2 = _slicedToArray(_loginP, 2),
+    password = _loginP2[0],
+    setPassword = _loginP2[1];
+  var _loginE = useState(''),
+    _loginE2 = _slicedToArray(_loginE, 2),
+    error = _loginE2[0],
+    setError = _loginE2[1];
+  var _loginR = useState(true),
+    _loginR2 = _slicedToArray(_loginR, 2),
+    remember = _loginR2[0],
+    setRemember = _loginR2[1];
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError('Kullan\u0131c\u0131 ad\u0131 ve \u015Fifre giriniz.');
+      return;
+    }
+    var result = doLogin(username.trim(), password.trim(), remember);
+    if (result) {
+      onLogin(result);
+    } else {
+      setError('Kullan\u0131c\u0131 ad\u0131 veya \u015Fifre hatal\u0131!');
+    }
+  }
+  return React.createElement("div", {className:"login-container"},
+    React.createElement("div", {className:"login-box"},
+      React.createElement("div", {className:"login-logo"}, "\uD83D\uDCCA"),
+      React.createElement("h2", null, "Hesab\u0131m"),
+      React.createElement("div", {className:"login-subtitle"}, "Finansal Y\u00F6netim Paneli"),
+      error && React.createElement("div", {className:"login-error"}, error),
+      React.createElement("form", {onSubmit:handleSubmit},
+        React.createElement("input", {className:"form-control",placeholder:"Kullan\u0131c\u0131 Ad\u0131",value:username,onChange:function(e){setUsername(e.target.value);setError('')},autoFocus:true}),
+        React.createElement("input", {className:"form-control",type:"password",placeholder:"\u015Eifre",value:password,onChange:function(e){setPassword(e.target.value);setError('')}}),
+        React.createElement("label", {className:"login-remember"},
+          React.createElement("input", {type:"checkbox",checked:remember,onChange:function(e){setRemember(e.target.checked)}}),
+          "Beni hat\u0131rla"),
+        React.createElement("button", {className:"btn btn-primary",type:"submit"}, "\uD83D\uDD12 Giri\u015F Yap")
+      ),
+      React.createElement("div", {style:{marginTop:'20px',textAlign:'center',fontSize:'11px',color:'var(--text3)'}}, "Varsay\u0131lan: admin / admin123")
+    )
+  );
+}
+
 function App() {
+  var _authState = useState(function(){return checkAuthFull()}),
+    _authState2 = _slicedToArray(_authState, 2),
+    authUser = _authState2[0],
+    setAuthUser = _authState2[1];
+  if (!authUser) {
+    return React.createElement(LoginScreen, {onLogin:function(u){setAuthUser(u)}});
+  }
   var _useState87 = useState(loadData),
     _useState88 = _slicedToArray(_useState87, 2),
     data = _useState88[0],
