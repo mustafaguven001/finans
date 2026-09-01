@@ -246,6 +246,24 @@ body{background:#fff;color:#000}
 .logo-upload-area img{max-width:80px;max-height:80px;border-radius:8px}
 .bank-mgmt-card{padding:16px;background:var(--bg3);border-radius:10px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
 .bank-mgmt-card img{width:32px;height:32px;border-radius:6px;object-fit:contain}
+
+.user-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.user-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.user-panel-header h3{font-size:16px;font-weight:700;margin:0}
+.user-card{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:8px;transition:all .2s}
+.user-card:hover{background:var(--bg4)}
+.user-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-info .user-name{font-weight:600;font-size:14px}
+.user-info .user-role{font-size:11px;color:var(--text3);margin-top:2px}
+.user-actions{display:flex;gap:6px;flex-shrink:0}
+.perm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:10px}
+.perm-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border-radius:8px;font-size:13px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.perm-item:hover{border-color:var(--blue)}
+.perm-item.active{background:var(--blue-bg);border-color:var(--blue)}
+.perm-item input{accent-color:var(--blue)}
+.user-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.user-form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1065,9 +1083,16 @@ function Sidebar(_ref3) {
     label: 'Firma Yönetimi'
   }, {
     id: 'ayarlar',
-    icon: '⚙️',
+    icon: '\u2699\uFE0F',
     label: 'Ayarlar'
-  }];
+  }].filter(function(item){
+    if (item.section) return true;
+    return userPerms.indexOf(item.id) !== -1;
+  }).filter(function(item, idx, arr){
+    if (!item.section) return true;
+    var next = arr[idx+1];
+    return next && !next.section;
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: "sidebar".concat(collapsed ? ' collapsed' : '')
   }, /*#__PURE__*/React.createElement("div", {
@@ -8754,30 +8779,61 @@ function Ayarlar(_ref29) {
     updateBankColor(name, '#888888');
     setNewBankName('');
   }
-  var _userMgmt = useState(false),
-    _userMgmt2 = _slicedToArray(_userMgmt, 2),
-    showUserMgmt = _userMgmt2[0],
-    setShowUserMgmt = _userMgmt2[1];
   var _users = useState(function(){return getUsers()}),
     _users2 = _slicedToArray(_users, 2),
     users = _users2[0],
     setUsers = _users2[1];
-  var _newUser = useState({username:'',password:'',ad:''}),
-    _newUser2 = _slicedToArray(_newUser, 2),
-    newUser = _newUser2[0],
-    setNewUser = _newUser2[1];
+  var _editUser = useState(null),
+    _editUser2 = _slicedToArray(_editUser, 2),
+    editUser = _editUser2[0],
+    setEditUser = _editUser2[1];
+  var _newUserForm = useState({username:'',password:'',ad:'',role:'user',yetkiler:['dashboard']}),
+    _newUserForm2 = _slicedToArray(_newUserForm, 2),
+    newUserForm = _newUserForm2[0],
+    setNewUserForm = _newUserForm2[1];
+  function togglePerm(arr, mod) {
+    if (arr.indexOf(mod) !== -1) return arr.filter(function(m){return m!==mod});
+    return [].concat(_toConsumableArray(arr),[mod]);
+  }
   function addUser() {
-    if (!newUser.username.trim() || !newUser.password.trim()) {alert('Kullan\u0131c\u0131 ad\u0131 ve \u015Fifre zorunlu');return}
-    var updated = [].concat(_toConsumableArray(users),[{username:newUser.username.trim(),password:newUser.password.trim(),ad:newUser.ad.trim()||newUser.username.trim()}]);
+    if (!newUserForm.username.trim() || !newUserForm.password.trim()) {alert('Kullan\u0131c\u0131 ad\u0131 ve \u015Fifre zorunlu');return}
+    if (users.some(function(u){return u.username===newUserForm.username.trim()})) {alert('Bu kullan\u0131c\u0131 ad\u0131 zaten mevcut');return}
+    var nu = {
+      username:newUserForm.username.trim(),
+      password:newUserForm.password.trim(),
+      ad:newUserForm.ad.trim()||newUserForm.username.trim(),
+      role:newUserForm.role,
+      yetkiler:newUserForm.role==='admin'?ALL_MODULES.slice():newUserForm.yetkiler
+    };
+    var updated = [].concat(_toConsumableArray(users),[nu]);
     setUsers(updated);
-    localStorage.setItem(LS_USERS, JSON.stringify(updated));
-    setNewUser({username:'',password:'',ad:''});
+    saveUsers(updated);
+    setNewUserForm({username:'',password:'',ad:'',role:'user',yetkiler:['dashboard']});
+  }
+  function updateUser(uname, changes) {
+    var updated = users.map(function(u){
+      if (u.username!==uname) return u;
+      var merged = _objectSpread(_objectSpread({},u),changes);
+      if (merged.role==='admin') merged.yetkiler = ALL_MODULES.slice();
+      return merged;
+    });
+    setUsers(updated);
+    saveUsers(updated);
   }
   function deleteUser(uname) {
     if (users.length <= 1) {alert('En az bir kullan\u0131c\u0131 olmal\u0131d\u0131r');return}
+    if (uname === 'admin') {alert('Admin kullan\u0131c\u0131 silinemez');return}
+    if (!window.confirm(uname + ' kullan\u0131c\u0131s\u0131 silinecek. Emin misiniz?')) return;
     var updated = users.filter(function(u){return u.username!==uname});
     setUsers(updated);
-    localStorage.setItem(LS_USERS, JSON.stringify(updated));
+    saveUsers(updated);
+    localStorage.removeItem('finansPanel_user_' + uname);
+  }
+  function resetUserPassword(uname) {
+    var np = window.prompt('Yeni \u015Fifre girin:');
+    if (!np || !np.trim()) return;
+    updateUser(uname, {password:np.trim()});
+    alert('\u015Eifre g\u00FCncellendi');
   }
   return React.createElement("div", null, React.createElement("div", {
     className: "section-title"
@@ -8815,28 +8871,93 @@ function Ayarlar(_ref29) {
       React.createElement("button",{className:"btn btn-primary btn-sm",onClick:addNewBank},"+ Ekle")
     )
   ),
-  React.createElement("div", {className:"stat-card",style:{padding:'20px',marginBottom:'20px'}},
-    React.createElement("div", {style:{fontWeight:700,fontSize:'15px',marginBottom:'14px',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-      React.createElement("span",null,"\uD83D\uDC64 Kullan\u0131c\u0131 Y\u00F6netimi"),
-      React.createElement("button",{className:"btn btn-sm btn-outline",onClick:function(){setShowUserMgmt(!showUserMgmt)}}, showUserMgmt ? "Gizle" : "G\u00F6ster")
+  React.createElement("div", {className:"user-panel"},
+    React.createElement("div", {className:"user-panel-header"},
+      React.createElement("h3",null,"\uD83D\uDC65 Kullan\u0131c\u0131 Kontrol Paneli"),
+      React.createElement("span",{style:{fontSize:'12px',color:'var(--text3)'}}, users.length, " kullan\u0131c\u0131")
     ),
-    showUserMgmt && React.createElement("div",null,
-      users.map(function(u){
-        return React.createElement("div",{key:u.username,style:{display:'flex',alignItems:'center',gap:'10px',padding:'8px',background:'var(--bg3)',borderRadius:'8px',marginBottom:'6px'}},
-          React.createElement("span",{style:{fontSize:'20px'}},"\uD83D\uDC64"),
-          React.createElement("div",{style:{flex:1}},
-            React.createElement("div",{style:{fontWeight:600,fontSize:'13px'}},u.ad||u.username),
-            React.createElement("div",{style:{fontSize:'11px',color:'var(--text3)'}},u.username)
+    users.map(function(u){
+      var avatarColors = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6'];
+      var aColor = avatarColors[Math.abs(u.username.charCodeAt(0)) % avatarColors.length];
+      var isEditing = editUser === u.username;
+      return React.createElement("div",{key:u.username},
+        React.createElement("div",{className:"user-card"},
+          React.createElement("div",{className:"user-avatar",style:{background:aColor}}, (u.ad||u.username).charAt(0).toUpperCase()),
+          React.createElement("div",{className:"user-info"},
+            React.createElement("div",{className:"user-name"}, u.ad||u.username,
+              React.createElement("span",{className:"badge badge-"+(u.role==='admin'?'blue':'purple'),style:{marginLeft:'8px',fontSize:'10px'}}, u.role==='admin'?'Admin':'Kullan\u0131c\u0131')
+            ),
+            React.createElement("div",{className:"user-role"}, "@",u.username, " \u00B7 ", (u.yetkiler||[]).length, " mod\u00FCl yetkisi")
           ),
-          React.createElement("button",{className:"btn btn-sm",style:{background:'var(--red-bg)',color:'var(--red)',fontSize:'11px'},onClick:function(){deleteUser(u.username)}},"\u2715")
+          React.createElement("div",{className:"user-actions"},
+            React.createElement("button",{className:"btn btn-sm btn-outline",style:{fontSize:'11px'},onClick:function(){setEditUser(isEditing?null:u.username)}}, isEditing?"Kapat":"\u270F\uFE0F Yetki"),
+            React.createElement("button",{className:"btn btn-sm btn-outline",style:{fontSize:'11px'},onClick:function(){resetUserPassword(u.username)}}, "\uD83D\uDD11"),
+            u.username!=='admin' && React.createElement("button",{className:"btn btn-sm",style:{background:'var(--red-bg)',color:'var(--red)',fontSize:'11px'},onClick:function(){deleteUser(u.username)}},"\uD83D\uDDD1\uFE0F")
+          )
+        ),
+        isEditing && React.createElement("div",{style:{padding:'14px',background:'var(--bg4)',borderRadius:'0 0 10px 10px',marginTop:'-8px',marginBottom:'8px'}},
+          React.createElement("div",{style:{display:'flex',gap:'12px',alignItems:'center',marginBottom:'12px'}},
+            React.createElement("span",{style:{fontSize:'13px',fontWeight:600}},"Rol:"),
+            React.createElement("select",{className:"form-control",value:u.role||'user',onChange:function(e){updateUser(u.username,{role:e.target.value})},style:{width:'auto',fontSize:'13px'}},
+              React.createElement("option",{value:"admin"},"Admin (T\u00FCm Yetkiler)"),
+              React.createElement("option",{value:"user"},"Kullan\u0131c\u0131 (Se\u00E7ili Mod\u00FCller)")
+            )
+          ),
+          u.role!=='admin' && React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:'13px',fontWeight:600,marginBottom:'8px'}},"Mod\u00FCl Yetkileri:"),
+            React.createElement("div",{className:"perm-grid"},
+              ALL_MODULES.map(function(mod){
+                var hasP = (u.yetkiler||[]).indexOf(mod)!==-1;
+                return React.createElement("label",{key:mod,className:"perm-item"+(hasP?' active':'')},
+                  React.createElement("input",{type:"checkbox",checked:hasP,onChange:function(){updateUser(u.username,{yetkiler:togglePerm(u.yetkiler||[],mod)})}}),
+                  React.createElement("span",null, MODULE_ICONS[mod]||'', " ", MODULE_LABELS[mod]||mod)
+                )
+              })
+            ),
+            React.createElement("div",{style:{display:'flex',gap:'8px',marginTop:'10px'}},
+              React.createElement("button",{className:"btn btn-sm btn-outline",style:{fontSize:'11px'},onClick:function(){updateUser(u.username,{yetkiler:ALL_MODULES.slice()})}},"T\u00FCm\u00FCn\u00FC Se\u00E7"),
+              React.createElement("button",{className:"btn btn-sm btn-outline",style:{fontSize:'11px'},onClick:function(){updateUser(u.username,{yetkiler:['dashboard']})}},"Temizle")
+            )
+          )
         )
-      }),
-      React.createElement("div",{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:'8px',marginTop:'10px'}},
-        React.createElement("input",{className:"form-control",placeholder:"Kullan\u0131c\u0131 ad\u0131",value:newUser.username,onChange:function(e){setNewUser(function(u){return _objectSpread(_objectSpread({},u),{},{username:e.target.value})})},style:{fontSize:'12px'}}),
-        React.createElement("input",{className:"form-control",type:"password",placeholder:"\u015Eifre",value:newUser.password,onChange:function(e){setNewUser(function(u){return _objectSpread(_objectSpread({},u),{},{password:e.target.value})})},style:{fontSize:'12px'}}),
-        React.createElement("input",{className:"form-control",placeholder:"Ad Soyad",value:newUser.ad,onChange:function(e){setNewUser(function(u){return _objectSpread(_objectSpread({},u),{},{ad:e.target.value})})},style:{fontSize:'12px'}}),
-        React.createElement("button",{className:"btn btn-primary btn-sm",onClick:addUser},"+ Ekle")
       )
+    }),
+    React.createElement("div",{style:{marginTop:'16px',padding:'16px',background:'var(--bg3)',borderRadius:'10px',border:'1px dashed var(--border2)'}},
+      React.createElement("div",{style:{fontWeight:600,fontSize:'14px',marginBottom:'12px'}},"+ Yeni Kullan\u0131c\u0131 Ekle"),
+      React.createElement("div",{className:"user-form-grid"},
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"form-label",style:{fontSize:'12px'}},"Kullan\u0131c\u0131 Ad\u0131 *"),
+          React.createElement("input",{className:"form-control",placeholder:"\u00D6rn: mehmet",value:newUserForm.username,onChange:function(e){setNewUserForm(function(f){return _objectSpread(_objectSpread({},f),{},{username:e.target.value})})}})
+        ),
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"form-label",style:{fontSize:'12px'}},"\u015Eifre *"),
+          React.createElement("input",{className:"form-control",type:"password",placeholder:"En az 4 karakter",value:newUserForm.password,onChange:function(e){setNewUserForm(function(f){return _objectSpread(_objectSpread({},f),{},{password:e.target.value})})}})
+        ),
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"form-label",style:{fontSize:'12px'}},"Ad Soyad"),
+          React.createElement("input",{className:"form-control",placeholder:"\u00D6rn: Mehmet Y\u0131lmaz",value:newUserForm.ad,onChange:function(e){setNewUserForm(function(f){return _objectSpread(_objectSpread({},f),{},{ad:e.target.value})})}})
+        ),
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"form-label",style:{fontSize:'12px'}},"Rol"),
+          React.createElement("select",{className:"form-control",value:newUserForm.role,onChange:function(e){setNewUserForm(function(f){return _objectSpread(_objectSpread({},f),{},{role:e.target.value})})}},
+            React.createElement("option",{value:"user"},"Kullan\u0131c\u0131"),
+            React.createElement("option",{value:"admin"},"Admin")
+          )
+        )
+      ),
+      newUserForm.role!=='admin' && React.createElement("div",{style:{marginTop:'12px'}},
+        React.createElement("div",{style:{fontSize:'12px',fontWeight:600,marginBottom:'6px'}},"Mod\u00FCl Yetkileri:"),
+        React.createElement("div",{className:"perm-grid"},
+          ALL_MODULES.filter(function(m){return m!=='firmalar'&&m!=='ayarlar'}).map(function(mod){
+            var hasP = newUserForm.yetkiler.indexOf(mod)!==-1;
+            return React.createElement("label",{key:mod,className:"perm-item"+(hasP?' active':'')},
+              React.createElement("input",{type:"checkbox",checked:hasP,onChange:function(){setNewUserForm(function(f){return _objectSpread(_objectSpread({},f),{},{yetkiler:togglePerm(f.yetkiler,mod)})})}}),
+              React.createElement("span",null, MODULE_ICONS[mod]||'', " ", MODULE_LABELS[mod]||mod)
+            )
+          })
+        )
+      ),
+      React.createElement("button",{className:"btn btn-primary",style:{marginTop:'14px',width:'100%'},onClick:addUser},"\uD83D\uDC64 Kullan\u0131c\u0131 Olu\u015Ftur")
     )
   ),
   React.createElement("div", {
@@ -8923,14 +9044,38 @@ function Ayarlar(_ref29) {
 /* ── AUTH ── */
 var LS_AUTH = 'finanspanel_auth';
 var LS_USERS = 'finanspanel_users';
+var ALL_MODULES = ['dashboard','takvim','krediler','kmh','kartlar','cekler','butce','faiz','masraflar','personel','raporlar','bildirimler','firmalar','ayarlar'];
+var MODULE_LABELS = {dashboard:'Dashboard',takvim:'\u00D6deme Takvimi',krediler:'Krediler',kmh:'KMH',kartlar:'Kredi Kartlar\u0131',cekler:'\u00C7ek/Senet',butce:'B\u00FCt\u00E7e',faiz:'Faiz Takibi',masraflar:'Masraflar',personel:'Personel',raporlar:'Raporlar',bildirimler:'Bildirimler',firmalar:'Firma Y\u00F6netimi',ayarlar:'Ayarlar'};
+var MODULE_ICONS = {dashboard:'\uD83D\uDCCA',takvim:'\uD83D\uDCC5',krediler:'\uD83C\uDFE6',kmh:'\uD83D\uDCB3',kartlar:'\uD83D\uDCB0',cekler:'\uD83D\uDCC4',butce:'\uD83D\uDCC8',faiz:'\uD83D\uDCB9',masraflar:'\uD83E\uDDFE',personel:'\uD83D\uDC65',raporlar:'\uD83D\uDCCB',bildirimler:'\uD83D\uDD14',firmalar:'\uD83C\uDFE2',ayarlar:'\u2699\uFE0F'};
 function getUsers() {
   try {
     var u = JSON.parse(localStorage.getItem(LS_USERS));
-    if (u && u.length) return u;
+    if (u && u.length) {
+      return u.map(function(x){
+        if (!x.role) x.role = x.username === 'admin' ? 'admin' : 'user';
+        if (!x.yetkiler) x.yetkiler = x.role === 'admin' ? ALL_MODULES.slice() : ['dashboard'];
+        return x;
+      });
+    }
   } catch(e) {}
-  var def = [{username:'admin',password:'admin123',ad:'Y\u00F6netici'}];
+  var def = [{username:'admin',password:'admin123',ad:'Y\u00F6netici',role:'admin',yetkiler:ALL_MODULES.slice()}];
   localStorage.setItem(LS_USERS, JSON.stringify(def));
   return def;
+}
+function saveUsers(u) {
+  localStorage.setItem(LS_USERS, JSON.stringify(u));
+}
+function getUserPerms(username) {
+  var users = getUsers();
+  var u = users.find(function(x){return x.username === username});
+  if (!u) return [];
+  if (u.role === 'admin') return ALL_MODULES.slice();
+  return u.yetkiler || ['dashboard'];
+}
+function isAdmin(username) {
+  var users = getUsers();
+  var u = users.find(function(x){return x.username === username});
+  return u && u.role === 'admin';
 }
 function checkAuth() {
   try {
@@ -8946,7 +9091,7 @@ function doLogin(username, password, remember) {
   var users = getUsers();
   var u = users.find(function(x){return x.username===username && x.password===password});
   if (!u) return false;
-  var auth = {loggedIn:true, username:u.username, ad:u.ad, time:Date.now()};
+  var auth = {loggedIn:true, username:u.username, ad:u.ad, role:u.role||'user', yetkiler:u.yetkiler||['dashboard'], time:Date.now()};
   if (remember) localStorage.setItem(LS_AUTH, JSON.stringify(auth));
   else sessionStorage.setItem(LS_AUTH, JSON.stringify(auth));
   return auth;
@@ -9012,7 +9157,7 @@ function LoginScreen(_ref_login) {
           "Beni hat\u0131rla"),
         React.createElement("button", {className:"btn btn-primary",type:"submit"}, "\uD83D\uDD12 Giri\u015F Yap")
       ),
-      React.createElement("div", {style:{marginTop:'20px',textAlign:'center',fontSize:'11px',color:'var(--text3)'}}, "Varsay\u0131lan: admin / admin123")
+      React.createElement("div", {style:{marginTop:'20px',textAlign:'center',fontSize:'11px',color:'var(--text3)'}}, "Hesab\u0131n\u0131za giri\u015F yap\u0131n")
     )
   );
 }
@@ -9023,8 +9168,11 @@ function App() {
     authUser = _authState2[0],
     setAuthUser = _authState2[1];
   if (!authUser) {
-    return React.createElement(LoginScreen, {onLogin:function(u){setAuthUser(u)}});
+    return React.createElement(LoginScreen, {onLogin:function(u){setUserDataKey(u.username);setAuthUser(u)}});
   }
+  setUserDataKey(authUser.username);
+  var userPerms = authUser.yetkiler || (authUser.role === 'admin' ? ALL_MODULES.slice() : ['dashboard']);
+  var userIsAdmin = authUser.role === 'admin';
   var _useState87 = useState(loadData),
     _useState88 = _slicedToArray(_useState87, 2),
     data = _useState88[0],
