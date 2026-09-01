@@ -317,6 +317,12 @@ var BANK_COLORS = getBankColors();
 var BANK_LOGOS = getBankLogos();
 var FIRMA_ICONS = ['🏗️', '🧼', '👤', '🏭', '🏪', '💼', '🏬', '🚚'];
 var FIRMA_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#14b8a6', '#eab308', '#ef4444', '#6366f1'];
+var ALL_MODULES = ['dashboard','takvim','krediler','kmh','kartlar','cekler','butce','faiz','masraflar','personel','raporlar','bildirimler','firmalar','ayarlar'];
+var MODULE_LABELS = {dashboard:'Dashboard',takvim:'\u00D6deme Takvimi',krediler:'Krediler',kmh:'KMH',kartlar:'Kredi Kartlar\u0131',cekler:'\u00C7ek/Senet',butce:'B\u00FCt\u00E7e',faiz:'Faiz Takibi',masraflar:'Masraflar',personel:'Personel',raporlar:'Raporlar',bildirimler:'Bildirimler',firmalar:'Firma Y\u00F6netimi',ayarlar:'Ayarlar'};
+var MODULE_ICONS = {dashboard:'\uD83D\uDCCA',takvim:'\uD83D\uDCC5',krediler:'\uD83C\uDFE6',kmh:'\uD83D\uDCB3',kartlar:'\uD83D\uDCB0',cekler:'\uD83D\uDCC4',butce:'\uD83D\uDCC8',faiz:'\uD83D\uDCB9',masraflar:'\uD83E\uDDFE',personel:'\uD83D\uDC65',raporlar:'\uD83D\uDCCB',bildirimler:'\uD83D\uDD14',firmalar:'\uD83C\uDFE2',ayarlar:'\u2699\uFE0F'};
+function saveUsers(u) {
+  localStorage.setItem(LS_USERS, JSON.stringify(u));
+}
 var DEFAULT_FIRMS = [{
   id: 1,
   ad: 'Güven İş İnşaat Tic Ltd Şti',
@@ -915,23 +921,46 @@ function odemeGunuBadge(gun) {
 /* ── STORAGE — tek key, tüm data, anlık kayıt ── */
 var LS_KEY = 'finansPanel_v2';
 var LS_THEME = 'finansPanel_theme';
+var _currentUserKey = LS_KEY;
+function setUserDataKey(username) {
+  if (!username || username === 'admin') { _currentUserKey = LS_KEY; }
+  else { _currentUserKey = 'finansPanel_user_' + username; }
+}
+var emptyUserData = {
+  firms: [],
+  loans: [],
+  kmh: [],
+  cards: [],
+  checks: [],
+  expenses: [],
+  personel: [],
+  faizKayitlari: [],
+  budgets: [],
+  notifications: [],
+  opiList: [],
+  odpiList: [],
+  masrafSablonlari: []
+};
 function loadData() {
   try {
-    var s = localStorage.getItem(LS_KEY);
-    if (!s) return initialData;
+    var s = localStorage.getItem(_currentUserKey);
+    if (!s) {
+      if (_currentUserKey === LS_KEY) return initialData;
+      return Object.assign({}, emptyUserData, {firms: DEFAULT_FIRMS});
+    }
     var parsed = JSON.parse(s);
-    // Geriye dönük uyumluluk: firms yoksa ekle
     if (!parsed.firms) parsed.firms = DEFAULT_FIRMS;
     return parsed;
   } catch (_unused) {
-    return initialData;
+    if (_currentUserKey === LS_KEY) return initialData;
+    return Object.assign({}, emptyUserData, {firms: DEFAULT_FIRMS});
   }
 }
 function saveData(d) {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(d));
+    localStorage.setItem(_currentUserKey, JSON.stringify(d));
   } catch (e) {
-    console.warn('localStorage yazma hatası', e);
+    console.warn('localStorage yazma hatasi', e);
   }
 }
 
@@ -9044,9 +9073,6 @@ function Ayarlar(_ref29) {
 /* ── AUTH ── */
 var LS_AUTH = 'finanspanel_auth';
 var LS_USERS = 'finanspanel_users';
-var ALL_MODULES = ['dashboard','takvim','krediler','kmh','kartlar','cekler','butce','faiz','masraflar','personel','raporlar','bildirimler','firmalar','ayarlar'];
-var MODULE_LABELS = {dashboard:'Dashboard',takvim:'\u00D6deme Takvimi',krediler:'Krediler',kmh:'KMH',kartlar:'Kredi Kartlar\u0131',cekler:'\u00C7ek/Senet',butce:'B\u00FCt\u00E7e',faiz:'Faiz Takibi',masraflar:'Masraflar',personel:'Personel',raporlar:'Raporlar',bildirimler:'Bildirimler',firmalar:'Firma Y\u00F6netimi',ayarlar:'Ayarlar'};
-var MODULE_ICONS = {dashboard:'\uD83D\uDCCA',takvim:'\uD83D\uDCC5',krediler:'\uD83C\uDFE6',kmh:'\uD83D\uDCB3',kartlar:'\uD83D\uDCB0',cekler:'\uD83D\uDCC4',butce:'\uD83D\uDCC8',faiz:'\uD83D\uDCB9',masraflar:'\uD83E\uDDFE',personel:'\uD83D\uDC65',raporlar:'\uD83D\uDCCB',bildirimler:'\uD83D\uDD14',firmalar:'\uD83C\uDFE2',ayarlar:'\u2699\uFE0F'};
 function getUsers() {
   try {
     var u = JSON.parse(localStorage.getItem(LS_USERS));
@@ -9061,9 +9087,6 @@ function getUsers() {
   var def = [{username:'admin',password:'admin123',ad:'Y\u00F6netici',role:'admin',yetkiler:ALL_MODULES.slice()}];
   localStorage.setItem(LS_USERS, JSON.stringify(def));
   return def;
-}
-function saveUsers(u) {
-  localStorage.setItem(LS_USERS, JSON.stringify(u));
 }
 function getUserPerms(username) {
   var users = getUsers();
