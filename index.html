@@ -2783,7 +2783,21 @@ function Kartlar(_ref9) {
     form = _useState26[0],
     setForm = _useState26[1];
   var list = data.cards.filter(function (x) {
-    return firmFilter === 'Tüm Firmalar' || x.firma === firmFilter;
+    if (firmFilter !== 'Tüm Firmalar' && x.firma !== firmFilter) return false;
+    if (kartBankaFilter !== 'Tümü' && x.banka !== kartBankaFilter) return false;
+    if (kartDolulukFilter !== 'hepsi') {
+      var pct = Math.round(x.borc / (x.limit || 1) * 100);
+      if (kartDolulukFilter === '85+' && pct < 85) return false;
+      if (kartDolulukFilter === '70-85' && (pct < 70 || pct >= 85)) return false;
+      if (kartDolulukFilter === '70-' && pct >= 70) return false;
+    }
+    if (kartKesimFilter !== 'hepsi') {
+      var g = x.kesimGunu || 0;
+      if (kartKesimFilter === '1' && g > 10) return false;
+      if (kartKesimFilter === '11' && (g < 11 || g > 20)) return false;
+      if (kartKesimFilter === '21' && g < 21) return false;
+    }
+    return true;
   });
   function save() {
     var f = _objectSpread(_objectSpread({}, form), {}, {
@@ -2818,6 +2832,7 @@ function Kartlar(_ref9) {
     saveData(next);
     setDelConfirm(null);
   }
+  var kartUsedBanks = _toConsumableArray(new Set(list.map(function(c){return c.banka}).filter(Boolean))).sort();
   var kartGroupedByBank = {};
   list.forEach(function(c){if(!kartGroupedByBank[c.banka])kartGroupedByBank[c.banka]=[];kartGroupedByBank[c.banka].push(c)});
   var kartBankOrder = Object.keys(kartGroupedByBank).sort();
@@ -2869,7 +2884,11 @@ function Kartlar(_ref9) {
       gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))',
       gap: '14px'
     }
-  }, list.map(function (c) {return renderKartCard(c,kartTodayDay)})),
+  }, _toConsumableArray(list).sort(function(a,b){
+    if(kartSiralama==='doluluk'){var pa=a.borc/(a.limit||1),pb=b.borc/(b.limit||1);return pb-pa}
+    if(kartSiralama==='odeme')return (a.sonOdemeGunu||99)-(b.sonOdemeGunu||99);
+    return 0;
+  }).map(function (c) {return renderKartCard(c,kartTodayDay)})),
   delConfirm && /*#__PURE__*/React.createElement(ConfirmModal, {
     mesaj: "Bu kart kayd\u0131 silinecek.",
     onOk: function onOk() {
