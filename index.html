@@ -9207,16 +9207,9 @@ function LoginScreen(_ref_login) {
 }
 
 function App() {
-  var _authState = useState(function(){return checkAuthFull()}),
-    _authState2 = _slicedToArray(_authState, 2),
-    authUser = _authState2[0],
-    setAuthUser = _authState2[1];
-  if (!authUser) {
-    return React.createElement(LoginScreen, {onLogin:function(u){setUserDataKey(u.username);setAuthUser(u)}});
-  }
-  setUserDataKey(authUser.username);
-  var userPerms = authUser.yetkiler || (authUser.role === 'admin' ? ALL_MODULES.slice() : ['dashboard']);
-  var userIsAdmin = authUser.role === 'admin';
+  setUserDataKey('admin');
+  var userPerms = ALL_MODULES.slice();
+  var userIsAdmin = true;
   var _useState87 = useState(loadData),
     _useState88 = _slicedToArray(_useState87, 2),
     data = _useState88[0],
